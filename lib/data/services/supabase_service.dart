@@ -5,10 +5,10 @@ import '../../domain/models/study_session.dart';
 import '../../domain/models/learning_journey.dart';
 
 class SupabaseConfig {
-  /// Replace these with your Supabase Project credentials:
-  /// Found in: Supabase Dashboard > Project Settings > API
-  static const String supabaseUrl = 'YOUR_SUPABASE_URL_HERE';
-  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
+  /// Supabase Project credentials
+  static const String supabaseUrl = 'https://yzzfrqbfhcfjfmcpaekx.supabase.co';
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6emZycWJmaGNmamZtY3BhZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MzU2NDMsImV4cCI6MjEwNjMxMTY0M30.sSFARVoi2eAQdVVYFAGVxN91bjG5hDV0W6kDVNZvd5U';
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty &&
