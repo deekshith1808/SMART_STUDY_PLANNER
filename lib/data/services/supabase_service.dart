@@ -5,16 +5,16 @@ import '../../domain/models/study_session.dart';
 import '../../domain/models/learning_journey.dart';
 
 class SupabaseConfig {
-  /// Replace these with your Supabase Project credentials:
-  /// Found in: Supabase Dashboard > Project Settings > API
-  static const String supabaseUrl = 'https://yzzfrqbfhcfjfmcpaekx.supabase.co/rest/v1/';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6emZycWJmaGNmamZtY3BhZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MzU2NDMsImV4cCI6MjEwNjMxMTY0M30.sSFARVoi2eAQdVVYFAGVxN91bjG5hDV0W6kDVNZvd5U';
+  /// Supabase Project credentials
+  static const String supabaseUrl = 'https://yzzfrqbfhcfjfmcpaekx.supabase.co';
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6emZycWJmaGNmamZtY3BhZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MzU2NDMsImV4cCI6MjEwNjMxMTY0M30.sSFARVoi2eAQdVVYFAGVxN91bjG5hDV0W6kDVNZvd5U';
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty &&
-      !supabaseUrl.contains('https://yzzfrqbfhcfjfmcpaekx.supabase.co/rest/v1/') &&
+      !supabaseUrl.contains('YOUR_SUPABASE_URL') &&
       supabaseAnonKey.isNotEmpty &&
-      !supabaseAnonKey.contains('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6emZycWJmaGNmamZtY3BhZWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MzU2NDMsImV4cCI6MjEwNjMxMTY0M30.sSFARVoi2eAQdVVYFAGVxN91bjG5hDV0W6kDVNZvd5U');
+      !supabaseAnonKey.contains('YOUR_SUPABASE_ANON_KEY');
 }
 
 class SupabaseService {

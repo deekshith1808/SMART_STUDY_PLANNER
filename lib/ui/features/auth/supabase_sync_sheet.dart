@@ -31,6 +31,16 @@ class _SupabaseSyncSheetState extends State<SupabaseSyncSheet> {
   String? _successMessage;
 
   @override
+  void initState() {
+    super.initState();
+    if (SupabaseConfig.isConfigured && !SupabaseService.isInitialized) {
+      SupabaseService.initialize().then((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -60,6 +70,10 @@ class _SupabaseSyncSheetState extends State<SupabaseSyncSheet> {
           _isLoading = false;
         });
         return;
+      }
+
+      if (!SupabaseService.isInitialized) {
+        await SupabaseService.initialize();
       }
 
       if (_isSignUp) {
