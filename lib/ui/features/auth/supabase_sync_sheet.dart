@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/data/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseSyncSheet extends StatefulWidget {
   const SupabaseSyncSheet({super.key});
@@ -78,9 +79,14 @@ class _SupabaseSyncSheetState extends State<SupabaseSyncSheet> {
 
       if (_isSignUp) {
         final res = await _supabase.signUp(email: email, password: password);
-        if (res?.user != null) {
+        if (res?.session != null) {
           setState(() {
             _successMessage = 'Account created successfully! You are signed in.';
+          });
+        } else if (res?.user != null) {
+          setState(() {
+            _successMessage =
+                'Account created! If you see a confirmation email in your inbox, please verify it. (Or turn off "Confirm email" in Supabase to sign in instantly).';
           });
         }
       } else {
@@ -90,6 +96,22 @@ class _SupabaseSyncSheetState extends State<SupabaseSyncSheet> {
             _successMessage = 'Welcome back! Signed in successfully.';
           });
         }
+      }
+    } on AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('invalid login credentials')) {
+        setState(() {
+          _errorMessage = _isSignUp
+              ? 'Could not create account: Check your email or password.'
+              : 'Invalid email or password. If you just signed up, check your email inbox to verify your account, or toggle off "Confirm email" in your Supabase project dashboard.';
+        });
+      } else if (msg.contains('rate limit')) {
+        setState(() {
+          _errorMessage =
+              'Email rate limit reached on Supabase. To bypass this, go to Supabase Dashboard > Authentication > Providers > Email, and turn off "Confirm email" to sign up instantly without email sending limits.';
+        });
+      } else {
+        setState(() => _errorMessage = e.message);
       }
     } catch (e) {
       setState(() => _errorMessage = e.toString());
@@ -443,7 +465,11 @@ class _SupabaseSyncSheetState extends State<SupabaseSyncSheet> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _isSignUp = false),
+                      onTap: () => setState(() {
+                        _isSignUp = false;
+                        _errorMessage = null;
+                        _successMessage = null;
+                      }),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
@@ -467,7 +493,11 @@ class _SupabaseSyncSheetState extends State<SupabaseSyncSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _isSignUp = true),
+                      onTap: () => setState(() {
+                        _isSignUp = true;
+                        _errorMessage = null;
+                        _successMessage = null;
+                      }),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
