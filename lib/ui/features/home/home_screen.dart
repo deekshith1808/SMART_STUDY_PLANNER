@@ -19,6 +19,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: context.watch<StudyPlannerViewModel>(),
       builder: (context, _) {
@@ -33,7 +35,7 @@ class HomeScreen extends StatelessWidget {
         ];
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
           body: IndexedStack(
             index: vm.selectedTabIndex,
             children: pages,
@@ -332,6 +334,7 @@ class _DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final vm = context.watch<StudyPlannerViewModel>();
     final profile = vm.profile;
 
@@ -341,17 +344,22 @@ class _DashboardTab extends StatelessWidget {
           expandedHeight: 164,
           floating: false,
           pinned: true,
-          backgroundColor: AppColors.primary,
+          backgroundColor: isDark ? AppColors.darkBackground : AppColors.primary,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFC2410C), // Warm Terracotta
-                    Color(0xFF9A3412), // Deep Sienna Clay
-                  ],
+                  colors: isDark
+                      ? const [
+                          Color(0xFF1E1B4B), // Deep Indigo / Purple
+                          Color(0xFF030712), // OLED Midnight Black
+                        ]
+                      : const [
+                          Color(0xFFC2410C), // Warm Terracotta
+                          Color(0xFF9A3412), // Deep Sienna Clay
+                        ],
                 ),
               ),
               child: SafeArea(
@@ -497,9 +505,29 @@ class _ExamJourneyBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = vm.journeyProgress;
     final hurdle = progress.hurdle;
     final isUrgent = hurdle.daysRemaining <= 2;
+
+    final bannerColors = isDark
+        ? (isUrgent
+            ? const [Color(0xEE7F1D1D), Color(0xEE1E1B4B)]
+            : const [Color(0xEE2E1065), Color(0xEE0F172A)])
+        : (isUrgent
+            ? const [Color(0xFFB91C1C), Color(0xFF991B1B)]
+            : const [Color(0xFFC2410C), Color(0xFF9A3412)]);
+
+    final bannerBorder = isDark
+        ? Border.all(
+            color: isUrgent ? const Color(0xFFEF4444) : const Color(0xFFA855F7),
+            width: 1.2,
+          )
+        : null;
+
+    final glowColor = isDark
+        ? (isUrgent ? const Color(0x40EF4444) : const Color(0x408B5CF6))
+        : (isUrgent ? const Color(0xFFB91C1C) : const Color(0xFFC2410C)).withAlpha(90);
 
     return GestureDetector(
       onTap: () => vm.setTabIndex(1),
@@ -507,16 +535,15 @@ class _ExamJourneyBanner extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: isUrgent
-                ? [const Color(0xFFB91C1C), const Color(0xFF991B1B)]
-                : [const Color(0xFFC2410C), const Color(0xFF9A3412)],
+            colors: bannerColors,
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(22),
+          border: bannerBorder,
           boxShadow: [
             BoxShadow(
-              color: (isUrgent ? const Color(0xFFB91C1C) : const Color(0xFFC2410C)).withAlpha(90),
+              color: glowColor,
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -634,6 +661,7 @@ class _UpcomingExamsStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hurdles = vm.journeyProgress.sortedHurdles;
 
     return Column(
@@ -651,7 +679,7 @@ class _UpcomingExamsStrip extends StatelessWidget {
                   style: GoogleFonts.lora(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -664,20 +692,20 @@ class _UpcomingExamsStrip extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(20),
+                  color: (isDark ? AppColors.darkPrimary : AppColors.primary).withAlpha(25),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.add_rounded, size: 14, color: AppColors.primary),
+                    Icon(Icons.add_rounded, size: 14, color: isDark ? AppColors.darkPrimary : AppColors.primary),
                     const SizedBox(width: 3),
                     Text(
                       'Add Exam',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: isDark ? AppColors.darkPrimary : AppColors.primary,
                       ),
                     ),
                   ],
@@ -695,19 +723,28 @@ class _UpcomingExamsStrip extends StatelessWidget {
             ),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.borderLight),
-              ),
+              decoration: isDark
+                  ? AppColors.glassCardDecoration(
+                      isDark: true,
+                      borderColor: const Color(0x338B5CF6),
+                      borderRadius: 14,
+                    )
+                  : BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
               child: Row(
                 children: [
-                  const Icon(Icons.event_note_rounded, size: 18, color: AppColors.primary),
+                  Icon(Icons.event_note_rounded, size: 18, color: isDark ? AppColors.darkPrimary : AppColors.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'No exam dates set yet. Tap to add your exam schedule!',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ],
@@ -724,9 +761,15 @@ class _UpcomingExamsStrip extends StatelessWidget {
               itemBuilder: (context, i) {
                 final hurdle = hurdles[i];
                 final isUrgent = hurdle.daysRemaining <= 2;
-                final bg = isUrgent ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7);
-                final border = isUrgent ? const Color(0xFFF87171) : const Color(0xFFFCD34D);
-                final textColor = isUrgent ? const Color(0xFF991B1B) : const Color(0xFF92400E);
+                final bg = isDark
+                    ? (isUrgent ? const Color(0x40B91C1C) : const Color(0x401E1B4B))
+                    : (isUrgent ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7));
+                final border = isDark
+                    ? (isUrgent ? const Color(0xFFEF4444) : const Color(0xFF8B5CF6))
+                    : (isUrgent ? const Color(0xFFF87171) : const Color(0xFFFCD34D));
+                final textColor = isDark
+                    ? (isUrgent ? const Color(0xFFFCA5A5) : const Color(0xFFDDD6FE))
+                    : (isUrgent ? const Color(0xFF991B1B) : const Color(0xFF92400E));
 
                 return GestureDetector(
                   onTap: () => _showHurdleQuickOptions(context, hurdle),
@@ -1127,7 +1170,16 @@ class _StickyNotesPinboardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final notes = vm.notes;
+
+    const darkBorders = [
+      Color(0x6038BDF8),
+      Color(0x608B5CF6),
+      Color(0x60A855F7),
+      Color(0x60818CF8),
+      Color(0x6006B6D4),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1144,7 +1196,7 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                   style: GoogleFonts.lora(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -1154,20 +1206,20 @@ class _StickyNotesPinboardSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withAlpha(25),
+                  color: (isDark ? AppColors.darkAccent : AppColors.accent).withAlpha(25),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withAlpha(80)),
+                  border: Border.all(color: (isDark ? AppColors.darkAccent : AppColors.accent).withAlpha(80)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.add_rounded, size: 14, color: AppColors.accent),
+                    Icon(Icons.add_rounded, size: 14, color: isDark ? AppColors.darkAccent : AppColors.accent),
                     const SizedBox(width: 4),
                     Text(
                       'New Note',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: AppColors.accent,
+                        color: isDark ? AppColors.darkAccent : AppColors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1184,17 +1236,24 @@ class _StickyNotesPinboardSection extends StatelessWidget {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
-              ),
+              decoration: isDark
+                  ? AppColors.glassCardDecoration(
+                      isDark: true,
+                      borderColor: const Color(0x408B5CF6),
+                      glowColor: const Color(0x208B5CF6),
+                      borderRadius: 18,
+                    )
+                  : BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+                    ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFEF3C7),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0x338B5CF6) : const Color(0xFFFEF3C7),
                       shape: BoxShape.circle,
                     ),
                     child: const Text('📝', style: TextStyle(fontSize: 22)),
@@ -1209,7 +1268,7 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                           style: GoogleFonts.lora(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF92400E),
+                            color: isDark ? AppColors.darkTextPrimary : const Color(0xFF92400E),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -1217,13 +1276,13 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                           'Tap here to pin formulas, rapid takeaways, and study reminders.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: const Color(0xFFB45309),
+                            color: isDark ? AppColors.darkTextSecondary : const Color(0xFFB45309),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.add_circle_outline_rounded, color: Color(0xFFD97706)),
+                  Icon(Icons.add_circle_outline_rounded, color: isDark ? AppColors.darkPrimary : const Color(0xFFD97706)),
                 ],
               ),
             ),
@@ -1239,24 +1298,32 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                 final note = notes[i];
                 final bg = _pastelBgs[i % _pastelBgs.length];
                 final border = _pastelBorders[i % _pastelBorders.length];
+                final darkBorder = darkBorders[i % darkBorders.length];
 
                 return GestureDetector(
                   onTap: () => _showNoteDetail(context, note, vm),
                   child: Container(
                     width: 180,
                     padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: border, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(8),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                    decoration: isDark
+                        ? AppColors.glassCardDecoration(
+                            isDark: true,
+                            borderColor: darkBorder,
+                            glowColor: darkBorder.withAlpha(25),
+                            borderRadius: 18,
+                          )
+                        : BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: border, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(8),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1270,7 +1337,7 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha(160),
+                                    color: isDark ? const Color(0x3338BDF8) : Colors.white.withAlpha(160),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -1278,7 +1345,7 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF475569),
+                                      color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF475569),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -1293,7 +1360,7 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                               style: GoogleFonts.lora(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
+                                color: isDark ? AppColors.darkTextPrimary : const Color(0xFF1E293B),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1304,7 +1371,7 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 height: 1.35,
-                                color: const Color(0xFF334155),
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                               ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
@@ -1318,14 +1385,14 @@ class _StickyNotesPinboardSection extends StatelessWidget {
                               _formatNoteDate(note.createdAt),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
-                                color: const Color(0xFF64748B),
+                                color: isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B),
                               ),
                             ),
                             InkWell(
                               onTap: () => vm.deleteNote(note.id),
-                              child: const Padding(
-                                padding: EdgeInsets.all(2),
-                                child: Icon(Icons.delete_outline_rounded, size: 16, color: Color(0xFF94A3B8)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Icon(Icons.delete_outline_rounded, size: 16, color: isDark ? AppColors.darkTextSecondary : const Color(0xFF94A3B8)),
                               ),
                             ),
                           ],
@@ -1473,20 +1540,29 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      decoration: isDark
+          ? AppColors.glassCardDecoration(
+              isDark: true,
+              borderColor: color.withAlpha(80),
+              glowColor: color.withAlpha(20),
+              borderRadius: 18,
+            )
+          : BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.borderLight, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(6),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1494,10 +1570,14 @@ class _StatCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: bgTint,
+              color: isDark ? color.withAlpha(35) : bgTint,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(
+              icon,
+              color: isDark ? (color == AppColors.primary ? const Color(0xFF38BDF8) : color) : color,
+              size: 20,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -1505,7 +1585,7 @@ class _StatCard extends StatelessWidget {
             style: GoogleFonts.lora(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -1514,7 +1594,7 @@ class _StatCard extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             ),
           ),
         ],
@@ -1529,6 +1609,7 @@ class _SubjectCardsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final subjects = vm.profile?.subjects ?? [];
 
     return Column(
@@ -1542,7 +1623,7 @@ class _SubjectCardsSection extends StatelessWidget {
               style: GoogleFonts.lora(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               ),
             ),
             GestureDetector(
@@ -1550,14 +1631,14 @@ class _SubjectCardsSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(15),
+                  color: (isDark ? AppColors.darkPrimary : AppColors.primary).withAlpha(20),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Manage →',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1589,6 +1670,7 @@ class _SubjectMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _colorFromHex(subject.color);
     final pColor = subject.priority == SubjectPriority.high
         ? const Color(0xFFC2410C)
@@ -1599,18 +1681,25 @@ class _SubjectMiniCard extends StatelessWidget {
     return Container(
       width: 142,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withAlpha(90), width: 1.3),
-        boxShadow: [
-          BoxShadow(
-            color: color.withAlpha(15),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      decoration: isDark
+          ? AppColors.glassCardDecoration(
+              isDark: true,
+              borderColor: color.withAlpha(120),
+              glowColor: color.withAlpha(25),
+              borderRadius: 18,
+            )
+          : BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: color.withAlpha(90), width: 1.3),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withAlpha(15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1652,7 +1741,7 @@ class _SubjectMiniCard extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1665,7 +1754,7 @@ class _SubjectMiniCard extends StatelessWidget {
                     style: GoogleFonts.lora(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: color,
+                      color: isDark ? const Color(0xFF38BDF8) : color,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -1673,7 +1762,7 @@ class _SubjectMiniCard extends StatelessWidget {
                     '/ ${subject.targetMarks.toStringAsFixed(0)}%',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -1692,6 +1781,7 @@ class _TodayTasksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tasks = vm.todayTasks;
 
     return Column(
@@ -1705,7 +1795,7 @@ class _TodayTasksSection extends StatelessWidget {
               style: GoogleFonts.lora(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               ),
             ),
             GestureDetector(
@@ -1713,14 +1803,14 @@ class _TodayTasksSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withAlpha(20),
+                  color: (isDark ? AppColors.darkSecondary : AppColors.secondary).withAlpha(20),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Calendar →',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.secondary,
+                    color: isDark ? AppColors.darkSecondary : AppColors.secondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1746,27 +1836,35 @@ class _TaskItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final priorityColor = task.priority == 'high'
         ? AppColors.error
         : task.priority == 'medium'
             ? AppColors.warning
-            : AppColors.secondary;
+            : (isDark ? AppColors.darkPrimary : AppColors.secondary);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight, width: 1.1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(5),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: isDark
+          ? AppColors.glassCardDecoration(
+              isDark: true,
+              borderColor: const Color(0x338B5CF6),
+              glowColor: const Color(0x188B5CF6),
+              borderRadius: 16,
+            )
+          : BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderLight, width: 1.1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
       child: Row(
         children: [
           GestureDetector(
@@ -1776,9 +1874,13 @@ class _TaskItem extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: task.isCompleted ? AppColors.primary : Colors.transparent,
+                color: task.isCompleted
+                    ? (isDark ? AppColors.darkSecondary : AppColors.primary)
+                    : Colors.transparent,
                 border: Border.all(
-                  color: task.isCompleted ? AppColors.primary : const Color(0xFFC7BCAD),
+                  color: task.isCompleted
+                      ? (isDark ? AppColors.darkSecondary : AppColors.primary)
+                      : (isDark ? const Color(0xFF475569) : const Color(0xFFC7BCAD)),
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -1798,14 +1900,19 @@ class _TaskItem extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                    color: task.isCompleted
+                        ? (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)
+                        : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${task.subjectName} · ${task.startTime}',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -1835,40 +1942,74 @@ class _TaskItem extends StatelessWidget {
 class _NotesOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Consumer<StudyPlannerViewModel>(
       builder: (context, vm, _) {
         return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text('Quick Sticky Notes 📌', style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          title: Text(
+            'Quick Sticky Notes 📌',
+            style: GoogleFonts.lora(
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            ),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             height: 320,
             child: vm.notes.isEmpty
-                ? const Center(child: Text('No notes yet'))
+                ? Center(
+                    child: Text(
+                      'No notes yet',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: vm.notes.length,
                     itemBuilder: (context, i) {
                       final note = vm.notes[i];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFFDE68A)),
-                        ),
+                        decoration: isDark
+                            ? AppColors.glassCardDecoration(
+                                isDark: true,
+                                borderColor: const Color(0x408B5CF6),
+                                glowColor: const Color(0x208B5CF6),
+                                borderRadius: 14,
+                              )
+                            : BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFFDE68A)),
+                              ),
                         child: ListTile(
                           title: Text(
                             note.title,
-                            style: GoogleFonts.lora(fontWeight: FontWeight.w700, fontSize: 14),
+                            style: GoogleFonts.lora(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
                           ),
                           subtitle: Text(
                             note.content,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
+                            ),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 20),
+                            icon: Icon(
+                              Icons.delete_outline_rounded,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                              size: 20,
+                            ),
                             onPressed: () => vm.deleteNote(note.id),
                           ),
                         ),
@@ -1879,7 +2020,13 @@ class _NotesOverlay extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close', style: GoogleFonts.plusJakartaSans(color: AppColors.primary, fontWeight: FontWeight.w700)),
+              child: Text(
+                'Close',
+                style: GoogleFonts.plusJakartaSans(
+                  color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         );
@@ -1896,24 +2043,36 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
-      ),
+      decoration: isDark
+          ? AppColors.glassCardDecoration(
+              isDark: true,
+              borderColor: const Color(0x338B5CF6),
+              borderRadius: 18,
+            )
+          : BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.borderLight, width: 1.2),
+            ),
       child: Column(
         children: [
-          Icon(icon, size: 36, color: AppColors.textSecondary.withAlpha(120)),
+          Icon(
+            icon,
+            size: 36,
+            color: isDark ? AppColors.darkTextSecondary.withAlpha(120) : AppColors.textSecondary.withAlpha(120),
+          ),
           const SizedBox(height: 8),
           Text(
             message,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1940,13 +2099,20 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
+        color: isDark ? const Color(0xEE030712) : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? const Color(0x338B5CF6) : AppColors.borderLight,
+            width: 1,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
+            color: isDark ? const Color(0x408B5CF6) : Colors.black.withAlpha(8),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1991,14 +2157,20 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = index == current;
+    final selectedColor = isDark ? const Color(0xFF38BDF8) : AppColors.primary;
+    final unselectedColor = isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary;
+
     return GestureDetector(
       onTap: () => onTap(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withAlpha(20) : Colors.transparent,
+          color: isSelected
+              ? (isDark ? const Color(0x338B5CF6) : AppColors.primary.withAlpha(20))
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -2006,7 +2178,7 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected ? selectedColor : unselectedColor,
               size: 21,
             ),
             const SizedBox(height: 2),
@@ -2015,7 +2187,7 @@ class _NavItem extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected ? selectedColor : unselectedColor,
               ),
             ),
           ],

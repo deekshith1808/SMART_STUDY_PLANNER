@@ -24,7 +24,7 @@ class PomodoroViewModel extends ChangeNotifier {
   int workMinutes = 25;
   int shortBreakMinutes = 5;
   int longBreakMinutes = 15;
-  int sessionsBeforeLongBreak = 4;
+  int sessionsBeforeLongBreak = 2; // Long break occurs after every 2 sessions
 
   // Focus Shield Configuration
   FocusShieldConfig _shieldConfig = FocusShieldConfig.defaultConfig();
@@ -47,6 +47,34 @@ class PomodoroViewModel extends ChangeNotifier {
   String? get selectedSubjectId => _selectedSubjectId;
   String? get selectedSubjectName => _selectedSubjectName;
   String? get selectedTopic => _selectedTopic;
+
+  bool get isLongBreakAvailable =>
+      (_completedSessions > 0 && _completedSessions % sessionsBeforeLongBreak == 0);
+
+  int get sessionsUntilLongBreak {
+    final current = _completedSessions % sessionsBeforeLongBreak;
+    return sessionsBeforeLongBreak - current;
+  }
+
+  String get longBreakHint {
+    if (isLongBreakAvailable) {
+      return '🎉 Long break unlocked! Take a 15-minute recharge.';
+    }
+    final current = _completedSessions % sessionsBeforeLongBreak;
+    final remaining = sessionsBeforeLongBreak - current;
+    return '🔒 Long break only exists after 2 sessions ($current/2 completed. Finish $remaining more session to unlock).';
+  }
+
+  bool selectPhase(PomodoroPhase targetPhase) {
+    if (_isRunning) return false;
+    if (targetPhase == PomodoroPhase.longBreak && !isLongBreakAvailable) {
+      return false;
+    }
+    _phase = targetPhase;
+    _secondsRemaining = _totalSeconds;
+    notifyListeners();
+    return true;
+  }
 
   String get formattedTime {
     final minutes = _secondsRemaining ~/ 60;
@@ -491,6 +519,7 @@ class StudyPlannerViewModel extends ChangeNotifier {
       }
     }
 
+    _recalculateDynamicProgress();
     _isLoading = false;
     notifyListeners();
   }
@@ -609,8 +638,24 @@ class StudyPlannerViewModel extends ChangeNotifier {
     await updateSubject(updated);
   }
 
+  void _recalculateDynamicProgress() {
+    if (_journeyProgress == null) return;
+    final totalHours =
+        _sessions.fold<int>(0, (sum, s) => sum + s.durationMinutes) / 60.0;
+    final studyDates = _sessions.map((s) => s.startTime).toList();
+    final streak = JourneyProgress.calculateStreakFromSessions(
+      studyDates: studyDates,
+      lastStudyDate: _journeyProgress!.lastStudyDate,
+    );
+    _journeyProgress = _journeyProgress!.copyWith(
+      totalHours: totalHours,
+      currentStreak: streak > 0 ? streak : _journeyProgress!.currentStreak,
+    );
+  }
+
   Future<void> reloadSessions() async {
     _sessions = await _repository.getSessions();
+    _recalculateDynamicProgress();
     notifyListeners();
   }
 
@@ -818,14 +863,16 @@ class StudyPlannerViewModel extends ChangeNotifier {
   Future<void> saveJourneyProgress(JourneyProgress progress) async {
     await _repository.saveJourneyProgress(progress);
     _journeyProgress = progress;
+    _recalculateDynamicProgress();
     if (_supabase.isAuthenticated) {
-      _supabase.syncJourney(progress).catchError((e) => debugPrint('Error syncing journey: $e'));
+      _supabase.syncJourney(_journeyProgress!).catchError((e) => debugPrint('Error syncing journey: $e'));
     }
     notifyListeners();
   }
 
   Future<void> completeJourneyNode(String nodeId) async {
     _journeyProgress = await _repository.completeJourneyNode(nodeId);
+    _recalculateDynamicProgress();
     if (_supabase.isAuthenticated && _journeyProgress != null) {
       _supabase.syncJourney(_journeyProgress!).catchError((e) => debugPrint('Error syncing journey: $e'));
     }
@@ -834,6 +881,7 @@ class StudyPlannerViewModel extends ChangeNotifier {
 
   Future<void> addXp(int xp) async {
     _journeyProgress = await _repository.addXp(xp);
+    _recalculateDynamicProgress();
     if (_supabase.isAuthenticated && _journeyProgress != null) {
       _supabase.syncJourney(_journeyProgress!).catchError((e) => debugPrint('Error syncing journey: $e'));
     }

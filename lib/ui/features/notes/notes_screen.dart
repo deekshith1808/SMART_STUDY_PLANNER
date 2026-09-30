@@ -17,6 +17,8 @@ class _NotesScreenState extends State<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: context.watch<StudyPlannerViewModel>(),
       builder: (context, _) {
@@ -27,21 +29,26 @@ class _NotesScreenState extends State<NotesScreen> {
         ).toList();
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
           appBar: AppBar(
+            backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+            elevation: 0,
             title: Text(
               'Quick Sticky Notes 📌',
-              style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: GoogleFonts.lora(
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
             ),
             actions: [
               Container(
                 margin: const EdgeInsets.only(right: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.darkSecondary : AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withAlpha(70),
+                      color: (isDark ? AppColors.darkSecondary : AppColors.primary).withAlpha(70),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -59,15 +66,40 @@ class _NotesScreenState extends State<NotesScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                 child: TextField(
                   onChanged: (v) => setState(() => _searchQuery = v),
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Search notes, formulas or key insights...',
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-                    fillColor: Colors.white,
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                    ),
+                    fillColor: isDark ? AppColors.darkTranslucentCard : Colors.white,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppColors.borderLight),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0x338B5CF6) : AppColors.borderLight,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0x338B5CF6) : AppColors.borderLight,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -82,26 +114,41 @@ class _NotesScreenState extends State<NotesScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withAlpha(25),
+                          color: (isDark ? AppColors.darkAccent : AppColors.accent).withAlpha(25),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.sticky_note_2_outlined, size: 48, color: AppColors.accent),
+                        child: Icon(
+                          Icons.sticky_note_2_outlined,
+                          size: 48,
+                          color: isDark ? AppColors.darkAccent : AppColors.accent,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'No sticky notes yet',
-                        style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        style: GoogleFonts.lora(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Capture study reminders, shortcuts, and key ideas.',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.textSecondary),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
                         onPressed: () => _showAddNoteDialog(context, vm),
                         icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
                         label: const Text('Add First Sticky Note'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppColors.darkSecondary : AppColors.primary,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -128,6 +175,7 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   void _showAddNoteDialog(BuildContext context, StudyPlannerViewModel vm) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleCtrl = TextEditingController();
     final contentCtrl = TextEditingController();
     final subjects = vm.profile?.subjects ?? [];
@@ -137,6 +185,7 @@ class _NotesScreenState extends State<NotesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Padding(
@@ -150,31 +199,89 @@ class _NotesScreenState extends State<NotesScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: const Color(0xFFD6CBC0), borderRadius: BorderRadius.circular(2)))),
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFD6CBC0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               Text(
                 'New Sticky Note 📝',
-                style: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: GoogleFonts.lora(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 18),
               TextField(
                 controller: titleCtrl,
-                style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(labelText: 'Title', prefixIcon: Icon(Icons.title_rounded, color: AppColors.primary)),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TextStyle(
+                    color: isDark ? AppColors.darkTextSecondary : null,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.title_rounded,
+                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: contentCtrl,
                 maxLines: 4,
-                style: GoogleFonts.plusJakartaSans(fontSize: 14),
-                decoration: const InputDecoration(labelText: 'Content / Formula', prefixIcon: Icon(Icons.notes_rounded, color: AppColors.accent)),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Content / Formula',
+                  labelStyle: TextStyle(
+                    color: isDark ? AppColors.darkTextSecondary : null,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.notes_rounded,
+                    color: isDark ? AppColors.darkAccent : AppColors.accent,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               if (subjects.isNotEmpty)
                 DropdownButtonFormField<String>(
                   initialValue: selectedSubjectId,
-                  decoration: const InputDecoration(labelText: 'Related Subject', prefixIcon: Icon(Icons.book_rounded, color: AppColors.secondary)),
-                  items: subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600)))).toList(),
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  decoration: InputDecoration(
+                    labelText: 'Related Subject',
+                    labelStyle: TextStyle(
+                      color: isDark ? AppColors.darkTextSecondary : null,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.book_rounded,
+                      color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                    ),
+                  ),
+                  items: subjects.map((s) => DropdownMenuItem(
+                    value: s.id,
+                    child: Text(
+                      s.name,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                    ),
+                  )).toList(),
                   onChanged: (id) {
                     setModalState(() {
                       selectedSubjectId = id;
@@ -202,7 +309,8 @@ class _NotesScreenState extends State<NotesScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: isDark ? AppColors.darkSecondary : AppColors.primary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
@@ -225,8 +333,10 @@ class _NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Warm handcrafted craft paper pastels
-    final colors = [
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Warm handcrafted craft paper pastels for light mode
+    final lightColors = [
       const Color(0xFFFEF3C7), // Manila Paper
       const Color(0xFFD1FAE5), // Soft Sage Mint
       const Color(0xFFFFEDD5), // Peach Clay
@@ -234,22 +344,40 @@ class _NoteCard extends StatelessWidget {
       const Color(0xFFF3ECE0), // Linen Oatmeal
       const Color(0xFFDBEAFE), // Dusty Slate Blue
     ];
-    final color = colors[note.id.hashCode.abs() % colors.length];
+
+    // Translucent glass tints for dark mode (Blue, Violet, Purple, Black palette)
+    final darkBorderColors = [
+      const Color(0x6038BDF8), // Electric Blue
+      const Color(0x608B5CF6), // Royal Violet
+      const Color(0x60A855F7), // Neon Purple
+      const Color(0x60818CF8), // Indigo
+      const Color(0x6006B6D4), // Cyan
+    ];
+
+    final lightColor = lightColors[note.id.hashCode.abs() % lightColors.length];
+    final darkBorder = darkBorderColors[note.id.hashCode.abs() % darkBorderColors.length];
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withAlpha(15), width: 1.1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      decoration: isDark
+          ? AppColors.glassCardDecoration(
+              isDark: true,
+              borderColor: darkBorder,
+              glowColor: darkBorder.withAlpha(25),
+              borderRadius: 18,
+            )
+          : BoxDecoration(
+              color: lightColor,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.black.withAlpha(15), width: 1.1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(6),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -262,7 +390,7 @@ class _NoteCard extends StatelessWidget {
                   style: GoogleFonts.lora(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -271,12 +399,16 @@ class _NoteCard extends StatelessWidget {
               GestureDetector(
                 onTap: onDelete,
                 child: Container(
-                  padding: const EdgeInsets.all(2),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(120),
+                    color: isDark ? Colors.white.withAlpha(25) : Colors.white.withAlpha(120),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.close_rounded, size: 14, color: AppColors.textPrimary),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -287,7 +419,7 @@ class _NoteCard extends StatelessWidget {
               note.content,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: AppColors.textPrimary.withAlpha(200),
+                color: isDark ? const Color(0xFFCBD5E1) : AppColors.textPrimary.withAlpha(200),
                 height: 1.45,
               ),
               overflow: TextOverflow.fade,
@@ -299,13 +431,20 @@ class _NoteCard extends StatelessWidget {
               Container(
                 width: 6,
                 height: 6,
-                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   note.subjectName,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkPrimary : AppColors.textPrimary,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -314,7 +453,10 @@ class _NoteCard extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             '${note.createdAt.day}/${note.createdAt.month}/${note.createdAt.year}',
-            style: GoogleFonts.plusJakartaSans(fontSize: 9, color: AppColors.textSecondary),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 9,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            ),
           ),
         ],
       ),

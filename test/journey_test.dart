@@ -23,8 +23,8 @@ void main() {
 
       expect(progress.currentStreak, 5);
       expect(progress.totalXp, 385);
-      expect(progress.level, 4);
-      expect(progress.levelTitle, 'Syllabus Crusher');
+      expect(progress.level, 6); // (385 ~/ 80) + 2 succeeded levels = 6
+      expect(progress.levelTitle, 'Scholar of Eminence');
       expect(progress.nodes.length, 6);
       expect(progress.hurdle.title, 'Midterm Semester Exam');
       expect(progress.hurdle.requiredNodes, 5);

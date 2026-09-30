@@ -322,78 +322,158 @@ class _PhaseSelector extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2835) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white12 : AppColors.borderLight,
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      padding: const EdgeInsets.all(8),
+      decoration: AppColors.glassCardDecoration(
+        isDark: isDark,
+        borderRadius: 20,
+        borderColor: isDark ? AppColors.darkTranslucentBorder : null,
+        glowColor: isDark ? AppColors.darkSecondary.withAlpha(30) : null,
       ),
-      child: Row(
-        children: PomodoroPhase.values.map((phase) {
-          final isSelected = vm.phase == phase;
-          final label = phase == PomodoroPhase.work
-              ? 'Focus'
-              : phase == PomodoroPhase.shortBreak
-                  ? 'Short Rest'
-                  : 'Long Rest';
-          final emoji = phase == PomodoroPhase.work
-              ? '🔥'
-              : phase == PomodoroPhase.shortBreak
-                  ? '☕'
-                  : '🌿';
-          final phaseColor = phase == PomodoroPhase.work ? accentColor : vm.phaseColor;
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: PomodoroPhase.values.map((phase) {
+              final isSelected = vm.phase == phase;
+              final isLongBreak = phase == PomodoroPhase.longBreak;
+              final isLocked = isLongBreak && !vm.isLongBreakAvailable;
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (!vm.isRunning) vm.skipPhase();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? phaseColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: phaseColor.withAlpha(80),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+              final label = phase == PomodoroPhase.work
+                  ? 'Focus'
+                  : phase == PomodoroPhase.shortBreak
+                      ? 'Short Rest'
+                      : (isLocked ? 'Long Rest 🔒' : 'Long Rest');
+              final emoji = phase == PomodoroPhase.work
+                  ? '🔥'
+                  : phase == PomodoroPhase.shortBreak
+                      ? '☕'
+                      : (isLocked ? '🔒' : '🌿');
+              final phaseColor =
+                  phase == PomodoroPhase.work ? accentColor : vm.phaseColor;
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (vm.isRunning) return;
+                    final ok = vm.selectPhase(phase);
+                    if (!ok && isLongBreak) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.lock_clock_rounded,
+                                  color: Color(0xFF38BDF8), size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  vm.longBreakHint,
+                                  style: GoogleFonts.plusJakartaSans(
+                                      fontWeight: FontWeight.w600, fontSize: 13),
+                                ),
+                              ),
+                            ],
                           ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 4),
-                    Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : (isDark ? Colors.white60 : AppColors.textSecondary),
-                      ),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: const Color(0xFF0F172A),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? phaseColor
+                          : (isLocked
+                              ? (isDark
+                                  ? Colors.white.withAlpha(8)
+                                  : Colors.grey.withAlpha(20))
+                              : Colors.transparent),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: phaseColor.withAlpha(80),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight:
+                                isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : (isLocked
+                                    ? (isDark ? Colors.white30 : Colors.black26)
+                                    : (isDark
+                                        ? Colors.white70
+                                        : AppColors.textSecondary)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          if (!vm.isLongBreakAvailable) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0x331E1B4B)
+                    : const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkBorderAccent.withAlpha(40)
+                      : const Color(0xFFBAE6FD),
+                  width: 1,
                 ),
               ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: isDark ? AppColors.darkPrimary : const Color(0xFF0284C7),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      vm.longBreakHint,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.darkPrimary
+                            : const Color(0xFF0369A1),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        }).toList(),
+          ],
+        ],
       ),
     );
   }

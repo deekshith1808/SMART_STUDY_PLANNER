@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
-
+import 'package:smart_study_planner/domain/models/study_session.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -20,7 +20,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -40,7 +40,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
         return Scaffold(
           backgroundColor:
-              isDark ? AppColors.darkBackground : AppColors.background,
+              isDark ? const Color(0xFF030712) : AppColors.background,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -49,11 +49,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 const Text('📊', style: TextStyle(fontSize: 22)),
                 const SizedBox(width: 8),
                 Text(
-                  'Insights & Mastery Hub',
+                  'Insights & AI Coach',
                   style: GoogleFonts.lora(
                     fontWeight: FontWeight.w700,
                     fontSize: 20,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -72,14 +72,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               ),
               labelColor: isDark ? AppColors.darkPrimary : AppColors.primary,
               unselectedLabelColor:
-                  isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  isDark ? Colors.white60 : AppColors.textSecondary,
               indicatorColor:
                   isDark ? AppColors.darkPrimary : AppColors.primary,
               indicatorWeight: 3,
               tabs: const [
                 Tab(text: 'Overview'),
                 Tab(text: 'Subject Mastery'),
-                Tab(text: 'Daily Quiz 🎯'),
                 Tab(text: 'AI Study Coach 🤖'),
               ],
             ),
@@ -93,7 +92,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 isDark: isDark,
                 onNavigateToTimer: () => vm.setTabIndex(2),
               ),
-              _DailyQuizTab(vm: vm, isDark: isDark),
               _AICoachTab(vm: vm, isDark: isDark),
             ],
           ),
@@ -763,210 +761,150 @@ class _SubjectMasteryTabState extends State<_SubjectMasteryTab> {
 }
 
 // ==========================================
-// TAB 3: DAILY KNOWLEDGE CHECK MINI-QUIZ
+// TAB 3: ENHANCED AI STUDY COACH & PREDICTIVE RADAR
 // ==========================================
-class _DailyQuizTab extends StatefulWidget {
+class _AICoachTab extends StatefulWidget {
   final StudyPlannerViewModel vm;
   final bool isDark;
-
-  const _DailyQuizTab({required this.vm, required this.isDark});
+  const _AICoachTab({required this.vm, required this.isDark});
 
   @override
-  State<_DailyQuizTab> createState() => _DailyQuizTabState();
+  State<_AICoachTab> createState() => _AICoachTabState();
 }
 
-class _QuizQuestion {
-  final String question;
-  final List<String> options;
-  final int correctIndex;
-  final String explanation;
+class _AICoachTabState extends State<_AICoachTab> {
+  String _selectedStrategy = 'Sprint'; // 'Sprint', 'Mastery', 'Weakness'
+  String _selectedTopicExplainer = "Newton's 3rd Law";
 
-  const _QuizQuestion({
-    required this.question,
-    required this.options,
-    required this.correctIndex,
-    required this.explanation,
-  });
-}
-
-class _DailyQuizTabState extends State<_DailyQuizTab> {
-  String _selectedSubject = 'Physics';
-  int _currentQuestionIndex = 0;
-  int? _selectedOptionIndex;
-  int _score = 0;
-  bool _quizCompleted = false;
-  bool _xpAwarded = false;
-
-  static const Map<String, List<_QuizQuestion>> _quizBanks = {
-    'Physics': [
-      _QuizQuestion(
-        question: 'What does Newton\'s Third Law of Motion state?',
-        options: [
-          'Force equals mass times acceleration',
-          'For every action, there is an equal and opposite reaction',
-          'Energy cannot be created or destroyed',
-          'An object in motion remains in motion unless acted upon',
-        ],
-        correctIndex: 1,
-        explanation:
-            'Newton\'s Third Law states that forces always occur in matched pairs: whenever object A exerts a force on B, B exerts an equal and opposite force on A.',
-      ),
-      _QuizQuestion(
-        question: 'What is the SI unit of Electric Potential Difference?',
-        options: ['Ampere (A)', 'Joule (J)', 'Volt (V)', 'Ohm (Ω)'],
-        correctIndex: 2,
-        explanation:
-            'Electric potential difference is measured in Volts (V), which represents energy per unit charge: 1 Volt = 1 Joule per Coulomb.',
-      ),
-      _QuizQuestion(
-        question: 'In projectile motion, what happens to the horizontal velocity in the absence of air resistance?',
-        options: [
-          'It continuously decreases to zero',
-          'It accelerates at 9.8 m/s²',
-          'It remains constant throughout flight',
-          'It doubles at maximum altitude',
-        ],
-        correctIndex: 2,
-        explanation:
-            'With no horizontal force acting on the projectile, horizontal acceleration is 0, so horizontal velocity stays completely constant.',
-      ),
-    ],
-    'Maths': [
-      _QuizQuestion(
-        question: 'What is the derivative of sin(x) with respect to x?',
-        options: ['-cos(x)', 'cos(x)', 'tan(x)', 'sec²(x)'],
-        correctIndex: 1,
-        explanation:
-            'The derivative of sin(x) is cos(x). Note that the derivative of cos(x) is -sin(x).',
-      ),
-      _QuizQuestion(
-        question: 'In a right-angled triangle, if legs are of length 3 and 4, what is the hypotenuse?',
-        options: ['5', '6', '7', '√7'],
-        correctIndex: 0,
-        explanation:
-            'By Pythagoras: 3² + 4² = 9 + 16 = 25. The square root of 25 is 5.',
-      ),
-      _QuizQuestion(
-        question: 'What is the value of log₁₀(1000)?',
-        options: ['1', '2', '3', '10'],
-        correctIndex: 2,
-        explanation:
-            'Since 10³ = 1000, the logarithm base 10 of 1000 is precisely 3.',
-      ),
-    ],
-    'Chemistry': [
-      _QuizQuestion(
-        question: 'What is the pH of pure neutral water at 25°C?',
-        options: ['0', '1', '7', '14'],
-        correctIndex: 2,
-        explanation:
-            'At 25°C, [H⁺] = 10⁻⁷ M, making pH = -log(10⁻⁷) = 7, which denotes exact neutrality.',
-      ),
-      _QuizQuestion(
-        question: 'Which gas is released when dilute hydrochloric acid reacts with zinc metal?',
-        options: ['Oxygen', 'Carbon Dioxide', 'Hydrogen', 'Chlorine'],
-        correctIndex: 2,
-        explanation:
-            'Zn + 2HCl → ZnCl₂ + H₂↑. Active metals displace hydrogen from dilute mineral acids.',
-      ),
-      _QuizQuestion(
-        question: 'What type of bond is formed when atoms share electron pairs?',
-        options: ['Ionic Bond', 'Covalent Bond', 'Hydrogen Bond', 'Metallic Bond'],
-        correctIndex: 1,
-        explanation:
-            'Covalent bonding involves the mutual sharing of valence electrons between non-metal atoms.',
-      ),
-    ],
-    'Computer Science': [
-      _QuizQuestion(
-        question: 'What is the worst-case time complexity of Binary Search?',
-        options: ['O(1)', 'O(n)', 'O(log n)', 'O(n log n)'],
-        correctIndex: 2,
-        explanation:
-            'Binary Search cuts the search space in half at each step, yielding an O(log n) time complexity.',
-      ),
-      _QuizQuestion(
-        question: 'Which data structure follows the LIFO (Last In First Out) principle?',
-        options: ['Queue', 'Stack', 'Linked List', 'Binary Tree'],
-        correctIndex: 1,
-        explanation:
-            'A Stack follows LIFO: elements are pushed and popped strictly from the top.',
-      ),
-      _QuizQuestion(
-        question: 'What is the base of the hexadecimal numbering system?',
-        options: ['2', '8', '10', '16'],
-        correctIndex: 3,
-        explanation:
-            'Hexadecimal uses 16 digits: 0–9 followed by A–F.',
-      ),
-    ],
-    'Biology': [
-      _QuizQuestion(
-        question: 'Which organelle is universally referred to as the powerhouse of the cell?',
-        options: ['Nucleus', 'Ribosome', 'Mitochondria', 'Endoplasmic Reticulum'],
-        correctIndex: 2,
-        explanation:
-            'Mitochondria produce the cellular chemical energy currency ATP via aerobic respiration.',
-      ),
-      _QuizQuestion(
-        question: 'What is the primary gas absorbed by green plants during photosynthesis?',
-        options: ['Oxygen (O₂)', 'Carbon Dioxide (CO₂)', 'Nitrogen (N₂)', 'Argon (Ar)'],
-        correctIndex: 1,
-        explanation:
-            'Plants absorb CO₂ from the atmosphere through stomata and convert it into glucose during the Calvin Cycle.',
-      ),
-      _QuizQuestion(
-        question: 'Which component in human blood is responsible for transporting oxygen?',
-        options: ['Platelets', 'White Blood Cells', 'Hemoglobin in Red Blood Cells', 'Plasma proteins'],
-        correctIndex: 2,
-        explanation:
-            'Hemoglobin molecules inside erythrocytes (RBCs) bind oxygen molecules reversibly in the lungs.',
-      ),
-    ],
+  static const Map<String, Map<String, String>> _conceptExplanations = {
+    "Newton's 3rd Law": {
+      "subject": "Physics",
+      "summary": "Every action has an equal & opposite reaction.",
+      "feynman": "When you push against a wall with 50N of force, the wall pushes back against your hands with exactly 50N in the opposite direction. Forces always come in matched interaction pairs!",
+      "examTip": "Never draw action-reaction pairs on the same free-body diagram—they act on two different bodies!",
+    },
+    "Binary Search & O(log n)": {
+      "subject": "Computer Science",
+      "summary": "Divide-and-conquer search on sorted collections.",
+      "feynman": "Think of guessing a secret number from 1 to 100. Guess 50 first. If too high, search 1 to 49. By cutting the search space in half each step, even 1,000,000 items takes only 20 comparisons!",
+      "examTip": "Array MUST be sorted. Corner cases: empty array, single element, duplicates, and integer overflow with (low + high) / 2.",
+    },
+    "Mitochondria & ATP": {
+      "subject": "Biology",
+      "summary": "Cellular respiration & energy synthesis.",
+      "feynman": "Mitochondria are the rechargeable batteries of cells. They take digested glucose + oxygen and recharge ADP into ATP (the cellular currency that powers muscle contraction & brain signals).",
+      "examTip": "Occurs in inner mitochondrial membrane (cristae) with ATP synthase. Produces ~30-32 ATP per glucose molecule.",
+    },
+    "Integration by Parts": {
+      "subject": "Mathematics",
+      "summary": "Reverse product rule: ∫ u dv = u v - ∫ v du.",
+      "feynman": "When integrating two functions multiplied together (like x · sin(x)), let u be the one that becomes simpler when differentiated, and dv be the one easy to integrate.",
+      "examTip": "Remember the LIATE acronym for picking 'u': Logarithmic, Inverse trig, Algebraic, Trigonometric, Exponential.",
+    },
+    "Acid-Base Neutralization": {
+      "subject": "Chemistry",
+      "summary": "H⁺(aq) + OH⁻(aq) → H₂O(l) with salt formation.",
+      "feynman": "An acid is like an eager proton donor (H⁺), and a base is a proton receiver (OH⁻). When mixed, they neutralize into harmless water and salt, releasing heat (exothermic).",
+      "examTip": "Equivalence point pH is 7 ONLY for strong acid + strong base. Strong acid + weak base yields acidic pH < 7.",
+    },
   };
 
-  List<_QuizQuestion> get _currentQuestions {
-    return _quizBanks[_selectedSubject] ?? _quizBanks['Physics']!;
-  }
+  void _generateRevisionPlan(String subjectName) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
-  void _resetQuiz([String? newSubject]) {
-    setState(() {
-      if (newSubject != null) _selectedSubject = newSubject;
-      _currentQuestionIndex = 0;
-      _selectedOptionIndex = null;
-      _score = 0;
-      _quizCompleted = false;
-      _xpAwarded = false;
-    });
+    final tasks = [
+      ScheduledTask(
+        id: 'ai_task_${DateTime.now().millisecondsSinceEpoch}_1',
+        title: '[$subjectName] Formula & Definition Recall',
+        subjectId: 'ai_sub_$subjectName',
+        subjectName: subjectName,
+        scheduledDate: today,
+        startTime: '09:00',
+        endTime: '09:30',
+        isCompleted: false,
+        priority: 'high',
+        description: 'AI Coach revision sprint',
+      ),
+      ScheduledTask(
+        id: 'ai_task_${DateTime.now().millisecondsSinceEpoch}_2',
+        title: '[$subjectName] Solve 5 High-Yield Exam Problems',
+        subjectId: 'ai_sub_$subjectName',
+        subjectName: subjectName,
+        scheduledDate: today.add(const Duration(days: 1)),
+        startTime: '10:00',
+        endTime: '10:45',
+        isCompleted: false,
+        priority: 'high',
+        description: 'AI Coach revision drill',
+      ),
+      ScheduledTask(
+        id: 'ai_task_${DateTime.now().millisecondsSinceEpoch}_3',
+        title: '[$subjectName] Feynman 5-Minute Blind Explanation Drill',
+        subjectId: 'ai_sub_$subjectName',
+        subjectName: subjectName,
+        scheduledDate: today.add(const Duration(days: 2)),
+        startTime: '11:00',
+        endTime: '11:20',
+        isCompleted: false,
+        priority: 'medium',
+        description: 'AI Coach recall drill',
+      ),
+    ];
+
+    for (final task in tasks) {
+      await widget.vm.addTask(task);
+    }
+    await widget.vm.addXp(15);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: Color(0xFF38BDF8), size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '✨ Generated 3 custom AI revision tasks for $subjectName! +15 XP awarded.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF0F172A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final questions = _currentQuestions;
-    final currentQ = questions[_currentQuestionIndex];
-    final availableSubjects = _quizBanks.keys.toList();
+    final hurdles = widget.vm.journeyProgress.sortedHurdles;
+    final activeHurdle = widget.vm.journeyProgress.activeHurdle;
+    final totalFocusHours = widget.vm.sessions.fold<int>(0, (sum, s) => sum + s.durationMinutes) / 60.0;
+    final readinessPct = activeHurdle != null ? (activeHurdle.readiness * 100).toInt() : 80;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header & Subject Selector Strip
+          // AI Coach Banner with Glassmorphism
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF1E1B4B), const Color(0xFF0F172A)]
-                    : [const Color(0xFFFEF3C7), const Color(0xFFF3ECE0)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? AppColors.darkSecondary.withAlpha(60) : const Color(0xFFF59E0B).withAlpha(60),
-              ),
+            padding: const EdgeInsets.all(18),
+            decoration: AppColors.glassCardDecoration(
+              isDark: isDark,
+              borderRadius: 24,
+              borderColor: isDark ? AppColors.darkBorderAccent.withAlpha(80) : const Color(0xFF6366F1).withAlpha(80),
+              glowColor: isDark ? AppColors.darkSecondary.withAlpha(40) : const Color(0xFF6366F1).withAlpha(20),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -976,534 +914,197 @@ class _DailyQuizTabState extends State<_DailyQuizTab> {
                   children: [
                     Row(
                       children: [
-                        const Text('🎯', style: TextStyle(fontSize: 22)),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Daily Knowledge Check',
-                          style: GoogleFonts.lora(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkPrimary.withAlpha(35)
+                                : const Color(0xFF6366F1).withAlpha(25),
+                            shape: BoxShape.circle,
                           ),
+                          child: const Text('🤖', style: TextStyle(fontSize: 24)),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI Cognitive Study Coach',
+                              style: GoogleFonts.lora(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Autonomous Syllabus & Exam Intelligence',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.darkPrimary : const Color(0xFF6366F1),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF047857),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '+20 XP Drill',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Solve 3 high-yield questions daily to build crystal-clear conceptual clarity.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Subject Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: availableSubjects.map((subj) {
-                      final isSelected = subj == _selectedSubject;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(subj),
-                          selected: isSelected,
-                          onSelected: (val) {
-                            if (val) _resetQuiz(subj);
-                          },
-                          selectedColor: isDark ? AppColors.darkPrimary : AppColors.primary,
-                          labelStyle: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected
-                                ? Colors.white
-                                : (isDark ? Colors.white70 : const Color(0xFF4B433B)),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Completion Card or Question Card
-          if (_quizCompleted)
-            _buildCompletionCard(isDark)
-          else ...[
-            // Progress Bar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Question ${_currentQuestionIndex + 1} of ${questions.length}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  ),
-                ),
-                Text(
-                  'Score: $_score / ${_currentQuestionIndex + (_selectedOptionIndex != null ? 1 : 0)}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: (_currentQuestionIndex + 1) / questions.length,
-                backgroundColor: isDark ? Colors.white12 : const Color(0xFFE5E7EB),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  isDark ? AppColors.darkPrimary : AppColors.primary,
-                ),
-                minHeight: 6,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Question Card
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.borderLight,
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(isDark ? 30 : 6),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    currentQ.question,
-                    style: GoogleFonts.lora(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Option Tiles
-                  ...List.generate(currentQ.options.length, (optIdx) {
-                    final optionText = currentQ.options[optIdx];
-                    final isAnswered = _selectedOptionIndex != null;
-                    final isCorrect = optIdx == currentQ.correctIndex;
-                    final isUserPick = optIdx == _selectedOptionIndex;
-
-                    Color tileBorder = isDark ? AppColors.darkBorder : AppColors.borderLight;
-                    Color tileBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF9FAFB);
-                    Color textColor = isDark ? Colors.white : const Color(0xFF2D2620);
-                    Widget? trailingIcon;
-
-                    if (isAnswered) {
-                      if (isCorrect) {
-                        tileBorder = const Color(0xFF059669);
-                        tileBg = const Color(0xFF059669).withAlpha(isDark ? 35 : 20);
-                        trailingIcon = const Icon(Icons.check_circle_rounded,
-                            color: Color(0xFF059669), size: 18);
-                      } else if (isUserPick) {
-                        tileBorder = const Color(0xFFDC2626);
-                        tileBg = const Color(0xFFDC2626).withAlpha(isDark ? 35 : 20);
-                        trailingIcon = const Icon(Icons.cancel_rounded,
-                            color: Color(0xFFDC2626), size: 18);
-                      }
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: isAnswered
-                            ? null
-                            : () {
-                                setState(() {
-                                  _selectedOptionIndex = optIdx;
-                                  if (optIdx == currentQ.correctIndex) {
-                                    _score++;
-                                  }
-                                });
-                              },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: tileBg,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: tileBorder, width: isAnswered && (isCorrect || isUserPick) ? 1.8 : 1.1),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 26,
-                                height: 26,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isAnswered && isCorrect
-                                      ? const Color(0xFF059669)
-                                      : (isAnswered && isUserPick
-                                          ? const Color(0xFFDC2626)
-                                          : (isDark ? Colors.white12 : Colors.black12)),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    String.fromCharCode(65 + optIdx),
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isAnswered && (isCorrect || isUserPick) ? Colors.white : textColor,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  optionText,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                              ?trailingIcon,
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-
-                  // Explanation Insight
-                  if (_selectedOptionIndex != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF047857).withAlpha(15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF047857).withAlpha(40)),
+                        color: const Color(0xFF10B981).withAlpha(25),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF10B981)),
                       ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('💡', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              currentQ.explanation,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                height: 1.4,
-                                color: isDark ? Colors.white70 : const Color(0xFF2D2620),
-                              ),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'ONLINE',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF10B981),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_currentQuestionIndex + 1 < questions.length) {
-                            setState(() {
-                              _currentQuestionIndex++;
-                              _selectedOptionIndex = null;
-                            });
-                          } else {
-                            setState(() {
-                              _quizCompleted = true;
-                            });
-                            if (!_xpAwarded) {
-                              _xpAwarded = true;
-                              widget.vm.addXp(20);
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: Text(
-                          _currentQuestionIndex + 1 < questions.length
-                              ? 'Next Question →'
-                              : 'Finish Quiz & Claim +20 XP 🏆',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletionCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF059669), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF059669).withAlpha(30),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Center(child: Text('🏆', style: TextStyle(fontSize: 48))),
-          const SizedBox(height: 12),
-          Text(
-            'Drill Completed!',
-            style: GoogleFonts.lora(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'You scored $_score / ${_currentQuestions.length} on $_selectedSubject concepts.',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF059669).withAlpha(20),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.stars_rounded, color: Color(0xFF059669), size: 20),
-                const SizedBox(width: 8),
+                ),
+                const SizedBox(height: 14),
                 Text(
-                  '+20 XP Credited to your Profile!',
+                  'Based on ${totalFocusHours.toStringAsFixed(1)}h logged study time and ${widget.vm.journeyProgress.succeededLevelsCount} completed quest levels, your overall exam readiness index is $readinessPct%.',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF059669),
+                    fontSize: 12,
+                    height: 1.45,
+                    color: isDark ? Colors.white70 : const Color(0xFF4B433B),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
+
+          // Strategy Selector Pills
+          Text(
+            'Active AI Preparation Strategy',
+            style: GoogleFonts.lora(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _resetQuiz(),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              _buildStrategyChip('Sprint', '⚡ 3-Day Sprint', isDark),
+              const SizedBox(width: 8),
+              _buildStrategyChip('Mastery', '🧠 Deep Mastery', isDark),
+              const SizedBox(width: 8),
+              _buildStrategyChip('Weakness', '🎯 Attack Weakness', isDark),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Strategy Directive Box
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0x331E1B4B) : const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorderAccent.withAlpha(50) : const Color(0xFFBAE6FD),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('💡', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _selectedStrategy == 'Sprint'
+                        ? 'Sprint Protocol: Focus 80% of study blocks on formula memory, past exam patterns, and closed-book retrieval. Avoid reading textbook chapters from scratch.'
+                        : _selectedStrategy == 'Mastery'
+                            ? 'Deep Mastery Protocol: Connect every formula to its underlying first principles. Use the Feynman technique to teach every concept out loud.'
+                            : 'Weakness Attack Protocol: Target subjects with lowest recorded marks. Spend your first 45 minutes of each day tackling only your most avoided topics.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      height: 1.45,
+                      color: isDark ? Colors.white70 : const Color(0xFF0369A1),
+                    ),
                   ),
-                  child: const Text('Retry Same Subject'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Predictive Exam Hurdles & One-Tap Revision Plan
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Predictive Exam Radar',
+                style: GoogleFonts.lora(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    final keys = _quizBanks.keys.toList();
-                    final nextIdx = (keys.indexOf(_selectedSubject) + 1) % keys.length;
-                    _resetQuiz(keys[nextIdx]);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF047857),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text('Try Another Subject'),
+              Text(
+                '${hurdles.length} Registered',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.darkPrimary : AppColors.primary,
                 ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==========================================
-// TAB 4: AI STUDY COACH & EXAM READINESS
-// ==========================================
-class _AICoachTab extends StatelessWidget {
-  final StudyPlannerViewModel vm;
-  final bool isDark;
-  const _AICoachTab({required this.vm, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final hurdles = vm.journeyProgress.sortedHurdles;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // AI Coach Introduction Banner
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF312E81), const Color(0xFF0F172A)]
-                    : [const Color(0xFFEEF2FF), const Color(0xFFE0E7FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? AppColors.darkPrimary.withAlpha(60) : const Color(0xFF6366F1).withAlpha(60),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkPrimary.withAlpha(30) : const Color(0xFF6366F1).withAlpha(20),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text('🤖', style: TextStyle(fontSize: 26)),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'AI Study Diagnostics',
-                        style: GoogleFonts.lora(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Real-time exam hurdle analysis & personalized cognitive retention recommendations.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Exam Readiness Index Cards
-          Text(
-            'Exam Hurdle Readiness Index',
-            style: GoogleFonts.lora(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           if (hurdles.isEmpty)
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'No exam hurdles scheduled yet. Add an exam hurdle from the Quest page or Home schedule wizard to see readiness forecasts.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              decoration: AppColors.glassCardDecoration(isDark: isDark),
+              child: Center(
+                child: Text(
+                  'No exam hurdles configured yet. Add them in the Quest or Subjects tab!',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: isDark ? Colors.white60 : AppColors.textSecondary,
+                  ),
                 ),
               ),
             )
           else
             ...hurdles.map((hurdle) {
-              final days = hurdle.daysRemaining;
-              final isUrgent = days <= 2;
-              final readinessPct = (hurdle.readiness * 100).toInt();
+              final isUrgent = hurdle.daysRemaining <= 3 && hurdle.daysRemaining >= 0;
+              final hurdlePct = (hurdle.readiness * 100).toInt();
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isUrgent
-                        ? const Color(0xFFEF4444)
-                        : (isDark ? AppColors.darkBorder : AppColors.borderLight),
-                    width: isUrgent ? 1.8 : 1.1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isUrgent
-                          ? const Color(0xFFEF4444).withAlpha(15)
-                          : Colors.black.withAlpha(isDark ? 20 : 5),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                decoration: AppColors.glassCardDecoration(
+                  isDark: isDark,
+                  borderRadius: 20,
+                  borderColor: isUrgent
+                      ? const Color(0xFFEF4444).withAlpha(120)
+                      : (isDark ? AppColors.darkBorderAccent.withAlpha(60) : null),
+                  glowColor: isUrgent
+                      ? const Color(0xFFEF4444).withAlpha(35)
+                      : (isDark ? AppColors.darkSecondary.withAlpha(25) : null),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1513,14 +1114,14 @@ class _AICoachTab extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Text(isUrgent ? '🚨' : '🏰', style: const TextStyle(fontSize: 18)),
+                            Text(isUrgent ? '🚨' : '🏰', style: const TextStyle(fontSize: 20)),
                             const SizedBox(width: 8),
                             Text(
                               hurdle.subjectName,
                               style: GoogleFonts.lora(
-                                fontSize: 15,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                color: isDark ? Colors.white : AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -1529,8 +1130,8 @@ class _AICoachTab extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: isUrgent
-                                ? const Color(0xFFEF4444).withAlpha(20)
-                                : const Color(0xFF059669).withAlpha(20),
+                                ? const Color(0xFFEF4444).withAlpha(25)
+                                : const Color(0xFF059669).withAlpha(25),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isUrgent ? const Color(0xFFEF4444) : const Color(0xFF059669),
@@ -1552,7 +1153,7 @@ class _AICoachTab extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Readiness: $readinessPct%',
+                          'Forecasted Readiness: $hurdlePct%',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -1560,10 +1161,10 @@ class _AICoachTab extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Target: ${hurdle.targetScore.toInt()}%',
+                          'Exam Goal: ${hurdle.targetScore.toInt()}%',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                            color: isDark ? Colors.white60 : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -1580,15 +1181,22 @@ class _AICoachTab extends StatelessWidget {
                         minHeight: 8,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      isUrgent
-                          ? '🔥 Emergency Advice: Stop reading new chapters. Solve 2 full-length past papers and test all formulas.'
-                          : '💡 Recommended Next Step: Conquer 2 more learning units in Quest to boost readiness to 90%.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        color: isDark ? Colors.white70 : const Color(0xFF4B433B),
-                        height: 1.4,
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _generateRevisionPlan(hurdle.subjectName),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark ? AppColors.darkSecondary : const Color(0xFFC2410C),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.bolt_rounded, size: 16),
+                      label: Text(
+                        'Generate 3-Step AI Revision Plan (+15 XP)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
@@ -1596,7 +1204,149 @@ class _AICoachTab extends StatelessWidget {
               );
             }),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
+
+          // Interactive AI Concept Explainer / Feynman Drill
+          Text(
+            'Interactive Concept Deep-Dive 🧠',
+            style: GoogleFonts.lora(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap a core concept or test your understanding with instant Feynman explanations:',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: isDark ? Colors.white60 : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Concept Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _conceptExplanations.keys.map((title) {
+                final isSelected = title == _selectedTopicExplainer;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(title),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedTopicExplainer = title);
+                    },
+                    selectedColor: isDark ? AppColors.darkSecondary : AppColors.primary,
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4B433B)),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Explainer Result Card
+          Builder(
+            builder: (context) {
+              final details = _conceptExplanations[_selectedTopicExplainer] ??
+                  _conceptExplanations.values.first;
+
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AppColors.glassCardDecoration(
+                  isDark: isDark,
+                  borderRadius: 20,
+                  borderColor: isDark ? AppColors.darkBorderAccent.withAlpha(70) : null,
+                  glowColor: isDark ? AppColors.darkSecondary.withAlpha(25) : null,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedTopicExplainer,
+                          style: GoogleFonts.lora(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (isDark ? AppColors.darkPrimary : AppColors.primary).withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            details['subject']!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '🗣️ The 10-Year-Old Explanation:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      details['feynman']!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        height: 1.45,
+                        color: isDark ? Colors.white70 : const Color(0xFF2D2620),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD97706).withAlpha(15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFD97706).withAlpha(40)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('⚡', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Exam Trap & Pro-Tip: ${details['examTip']}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
 
           // High Yield Study Tactics Card
           Text(
@@ -1604,7 +1354,7 @@ class _AICoachTab extends StatelessWidget {
             style: GoogleFonts.lora(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
@@ -1637,6 +1387,48 @@ class _AICoachTab extends StatelessWidget {
     );
   }
 
+  Widget _buildStrategyChip(String id, String label, bool isDark) {
+    final isSelected = _selectedStrategy == id;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedStrategy = id),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark ? AppColors.darkSecondary : AppColors.primary)
+                : (isDark ? const Color(0xFF1E2835) : Colors.white),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected
+                  ? (isDark ? AppColors.darkBorderAccent : AppColors.primary)
+                  : (isDark ? Colors.white12 : AppColors.borderLight),
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: (isDark ? AppColors.darkSecondary : AppColors.primary).withAlpha(80),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textSecondary),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTacticCard({
     required String emoji,
     required String title,
@@ -1645,13 +1437,10 @@ class _AICoachTab extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.borderLight,
-          width: 1.1,
-        ),
+      decoration: AppColors.glassCardDecoration(
+        isDark: isDark,
+        borderRadius: 16,
+        borderColor: isDark ? AppColors.darkBorder : AppColors.borderLight,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1667,7 +1456,7 @@ class _AICoachTab extends StatelessWidget {
                   style: GoogleFonts.lora(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1676,7 +1465,7 @@ class _AICoachTab extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     height: 1.4,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark ? Colors.white60 : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -1687,6 +1476,7 @@ class _AICoachTab extends StatelessWidget {
     );
   }
 }
+
 
 // ==========================================
 // SHARED WIDGETS

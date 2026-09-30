@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:smart_study_planner/data/services/supabase_service.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
+import 'package:smart_study_planner/ui/core/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool initialIsSignUp;
@@ -170,11 +171,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final vm = context.watch<StudyPlannerViewModel>();
 
-    final warmBg = isDark ? const Color(0xFF161514) : const Color(0xFFFAF7F2);
-    final cardBg = isDark ? const Color(0xFF242220) : Colors.white;
-    final textPrimary = isDark ? const Color(0xFFF3ECE4) : const Color(0xFF2D2620);
-    final textSecondary = isDark ? const Color(0xFFA69E96) : const Color(0xFF796F65);
-    final accentTerracotta = isDark ? const Color(0xFFF97316) : const Color(0xFFC2410C);
+    final warmBg = isDark ? const Color(0xFF030712) : const Color(0xFFFAF7F2);
+    final cardBg = isDark ? const Color(0xCC0F172A) : Colors.white;
+    final textPrimary = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF2D2620);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF796F65);
+    final accentTerracotta = isDark ? const Color(0xFF8B5CF6) : const Color(0xFFC2410C);
 
     return Scaffold(
       backgroundColor: warmBg,
@@ -261,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2E2C2A) : const Color(0xFFEDE5DA),
+                  color: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFEDE5DA),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -407,21 +408,28 @@ class _LoginScreenState extends State<LoginScreen> {
               // Form Container
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? Colors.white12 : const Color(0xFFE8DFD3),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(isDark ? 40 : 10),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
+                decoration: isDark
+                    ? AppColors.glassCardDecoration(
+                        isDark: true,
+                        borderColor: const Color(0x338B5CF6),
+                        glowColor: const Color(0x208B5CF6),
+                        borderRadius: 24,
+                      )
+                    : BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: const Color(0xFFE8DFD3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(10),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -431,7 +439,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _nameController,
                         textCapitalization: TextCapitalization.words,
                         style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : null,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Full Name',
                           hintText: 'e.g. Alex Johnson',
@@ -439,13 +450,21 @@ class _LoginScreenState extends State<LoginScreen> {
                               size: 20, color: accentTerracotta),
                           filled: true,
                           fillColor: isDark
-                              ? const Color(0xFF2C2A28)
+                              ? const Color(0xCC0B132B)
                               : const Color(0xFFFAF7F2),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide(
                               color: isDark
-                                  ? Colors.white12
+                                  ? const Color(0x338B5CF6)
+                                  : const Color(0xFFE8DFD3),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? const Color(0x338B5CF6)
                                   : const Color(0xFFE8DFD3),
                             ),
                           ),
@@ -460,7 +479,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14, fontWeight: FontWeight.w600),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : null,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Email Address',
                         hintText: 'student@example.com',
@@ -468,13 +490,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             size: 20, color: accentTerracotta),
                         filled: true,
                         fillColor: isDark
-                            ? const Color(0xFF2C2A28)
+                            ? const Color(0xCC0B132B)
                             : const Color(0xFFFAF7F2),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide(
                             color: isDark
-                                ? Colors.white12
+                                ? const Color(0x338B5CF6)
+                                : const Color(0xFFE8DFD3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: isDark
+                                ? const Color(0x338B5CF6)
                                 : const Color(0xFFE8DFD3),
                           ),
                         ),
@@ -487,7 +517,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14, fontWeight: FontWeight.w600),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : null,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: Icon(Icons.lock_outline_rounded,
@@ -505,13 +538,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         filled: true,
                         fillColor: isDark
-                            ? const Color(0xFF2C2A28)
+                            ? const Color(0xCC0B132B)
                             : const Color(0xFFFAF7F2),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide(
                             color: isDark
-                                ? Colors.white12
+                                ? const Color(0x338B5CF6)
+                                : const Color(0xFFE8DFD3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: isDark
+                                ? const Color(0x338B5CF6)
                                 : const Color(0xFFE8DFD3),
                           ),
                         ),
@@ -609,7 +650,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                   side: BorderSide(
-                    color: isDark ? Colors.white24 : const Color(0xFFD4C8B8),
+                    color: isDark ? const Color(0x338B5CF6) : const Color(0xFFD4C8B8),
                     width: 1.5,
                   ),
                   backgroundColor: cardBg,
@@ -651,15 +692,20 @@ class _LoginScreenState extends State<LoginScreen> {
               // Cloud Features Highlights
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF282522)
-                      : const Color(0xFFF3ECE0),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? Colors.white12 : const Color(0xFFE8DFD3),
-                  ),
-                ),
+                decoration: isDark
+                    ? AppColors.glassCardDecoration(
+                        isDark: true,
+                        borderColor: const Color(0x338B5CF6),
+                        glowColor: const Color(0x208B5CF6),
+                        borderRadius: 20,
+                      )
+                    : BoxDecoration(
+                        color: const Color(0xFFF3ECE0),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFE8DFD3),
+                        ),
+                      ),
                 child: Column(
                   children: [
                     _buildFeatureBullet(

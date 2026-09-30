@@ -44,10 +44,59 @@ class AppColors {
   static const darkBorder = Color(0xFF1E293B); // Dark Slate Border
   static const darkBorderAccent = Color(0xFF38BDF8); // Electric Blue Accent
 
-  // Dark Theme Accents
+  // Dark Theme Accents: Blue, Violet, Purple, Black
   static const darkPrimary = Color(0xFF38BDF8); // Electric Sky Blue
-  static const darkSecondary = Color(0xFF8B5CF6); // Royal Violet Purple
+  static const darkSecondary = Color(0xFF8B5CF6); // Royal Violet
   static const darkAccent = Color(0xFFA855F7); // Electric Neon Purple
+  static const darkViolet = Color(0xFF7C3AED); // Deep Luminous Violet
+
+  // Translucent Dark Theme Glassmorphism Palettes
+  static const darkTranslucentCard = Color(0xCC0F172A); // 80% translucent card
+  static const darkTranslucentSurface = Color(0x991E1B4B); // 60% translucent indigo
+  static const darkTranslucentNavy = Color(0xB30B132B); // 70% translucent deep navy
+  static const darkTranslucentBorder = Color(0x4038BDF8); // 25% electric blue border
+  static const darkTranslucentBorderViolet = Color(0x408B5CF6); // 25% violet border
+  static const darkTranslucentBorderPurple = Color(0x40A855F7); // 25% purple border
+
+  /// Translucent Glassmorphism Card Decoration for Dark Mode
+  static BoxDecoration glassCardDecoration({
+    required bool isDark,
+    Color? borderColor,
+    Color? glowColor,
+    double borderRadius = 20,
+    bool translucent = true,
+  }) {
+    if (!isDark) {
+      return BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: borderLight, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(5),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    }
+
+    final border = borderColor ?? darkBorderAccent.withAlpha(50);
+    final glow = glowColor ?? darkSecondary.withAlpha(25);
+
+    return BoxDecoration(
+      color: translucent ? darkTranslucentCard : darkCard,
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(color: border, width: 1.2),
+      boxShadow: [
+        BoxShadow(
+          color: glow,
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
 }
 
 class AppTheme {
