@@ -5,6 +5,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
+import 'package:smart_study_planner/domain/models/study_session.dart';
 
 class SubjectsScreen extends StatelessWidget {
   const SubjectsScreen({super.key});
@@ -88,22 +89,48 @@ class SubjectsScreen extends StatelessWidget {
   }
 }
 
-class _SubjectCard extends StatelessWidget {
+class _SubjectCard extends StatefulWidget {
   final Subject subject;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _SubjectCard({required this.subject, required this.onEdit, required this.onDelete});
+  const _SubjectCard({
+    required this.subject,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  State<_SubjectCard> createState() => _SubjectCardState();
+}
+
+class _SubjectCardState extends State<_SubjectCard> {
+  bool _isExpanded = false;
+  int _selectedTab = 0; // 0: Lessons, 1: To-Do, 2: Notes, 3: History
 
   @override
   Widget build(BuildContext context) {
+    final studyVm = context.watch<StudyPlannerViewModel>();
+    final subject = widget.subject;
     final color = _colorFromHex(subject.color);
     final progress = (subject.marks / 100).clamp(0.0, 1.0);
     final isAboveTarget = subject.marks >= subject.targetMarks;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
+    final subjectTasks = studyVm.tasks.where((t) =>
+        t.subjectId == subject.id ||
+        t.subjectName.toLowerCase() == subject.name.toLowerCase()).toList();
+    final subjectNotes = studyVm.notes.where((n) =>
+        n.subjectId == subject.id ||
+        n.subjectName.toLowerCase() == subject.name.toLowerCase()).toList();
+    final subjectSessions = studyVm.sessions.where((s) =>
+        s.subjectId == subject.id ||
+        s.subjectName.toLowerCase() == subject.name.toLowerCase()).toList();
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E2835) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withAlpha(90), width: 1.3),
         boxShadow: [
@@ -114,13 +141,11 @@ class _SubjectCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onEdit,
-          child: Padding(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Primary Card Information
+          Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +171,7 @@ class _SubjectCard extends StatelessWidget {
                             style: GoogleFonts.lora(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -154,7 +179,7 @@ class _SubjectCard extends StatelessWidget {
                             '${subject.studyHours}h focus time',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: isDark ? Colors.white60 : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -190,14 +215,14 @@ class _SubjectCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 20),
+                      icon: Icon(Icons.more_vert_rounded, color: isDark ? Colors.white60 : AppColors.textSecondary, size: 20),
                       itemBuilder: (_) => [
                         const PopupMenuItem(value: 'edit', child: Text('Edit Subject')),
                         const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: AppColors.error))),
                       ],
                       onSelected: (v) {
-                        if (v == 'edit') onEdit();
-                        if (v == 'delete') onDelete();
+                        if (v == 'edit') widget.onEdit();
+                        if (v == 'delete') widget.onDelete();
                       },
                     ),
                   ],
@@ -208,7 +233,7 @@ class _SubjectCard extends StatelessWidget {
                   children: [
                     Text(
                       'Score Progress',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : AppColors.textSecondary),
                     ),
                     const Spacer(),
                     Text(
@@ -216,7 +241,7 @@ class _SubjectCard extends StatelessWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -231,24 +256,52 @@ class _SubjectCard extends StatelessWidget {
                   padding: EdgeInsets.zero,
                 ),
                 const SizedBox(height: 12),
-                // Priority stars
+                // Priority stars & Exam chip
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Priority: ', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary)),
-                    ...List.generate(5, (i) => Icon(
-                      i < subject.priority ? Icons.star_rounded : Icons.star_outline_rounded,
-                      size: 16,
-                      color: i < subject.priority ? AppColors.accent : AppColors.textSecondary.withAlpha(60),
-                    )),
+                    Row(
+                      children: [
+                        Text('Priority: ', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : AppColors.textSecondary)),
+                        ...List.generate(5, (i) => Icon(
+                          i < subject.priority ? Icons.star_rounded : Icons.star_outline_rounded,
+                          size: 16,
+                          color: i < subject.priority ? AppColors.accent : (isDark ? Colors.white24 : AppColors.textSecondary.withAlpha(60)),
+                        )),
+                      ],
+                    ),
+                    if (subject.examDate != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.event_rounded, size: 12, color: Color(0xFFB45309)),
+                            const SizedBox(width: 4),
+                            Text(
+                              _subjectDaysLeft(subject.examDate!),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
-                if (subject.topics.isNotEmpty) ...[
+                if (subject.topics.isNotEmpty && !_isExpanded) ...[
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
-                    children: subject.topics.take(4).map((topic) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    children: subject.topics.take(3).map((topic) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
                         color: color.withAlpha(20),
                         borderRadius: BorderRadius.circular(8),
@@ -256,40 +309,645 @@ class _SubjectCard extends StatelessWidget {
                       ),
                       child: Text(
                         topic,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 10, color: color, fontWeight: FontWeight.w600),
                       ),
                     )).toList(),
-                  ),
-                ],
-                if (subject.examDate != null) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFF59E0B).withAlpha(120)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.event_rounded, size: 14, color: Color(0xFFB45309)),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Exam: ${_formatSubjectDate(subject.examDate!)} • ${_subjectDaysLeft(subject.examDate!)}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFFB45309),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ],
             ),
           ),
+
+          // Hub Action & Expansion Toggle Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF131B24) : const Color(0xFFFAF7F2),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(_isExpanded ? 0 : 20)),
+              border: Border(top: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE5DDD0))),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Quick Pomodoro Launch Button
+                TextButton.icon(
+                  onPressed: () {
+                    context.read<PomodoroViewModel>().selectSubject(subject.id, subject.name);
+                    context.read<StudyPlannerViewModel>().setTabIndex(2);
+                  },
+                  icon: Icon(Icons.timer_outlined, size: 16, color: color),
+                  label: Text(
+                    'Pomodoro Focus',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                // Expand / Collapse Hub Toggle
+                InkWell(
+                  onTap: () => setState(() => _isExpanded = !_isExpanded),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          _isExpanded ? 'Hide Hub' : 'Explore Hub (${subject.topics.length} topics)',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Expanded Subject Hub Content
+          if (_isExpanded) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF18222E) : const Color(0xFFFBF8F4),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Prominent Launch Pomodoro Action Bar
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<PomodoroViewModel>().selectSubject(subject.id, subject.name);
+                        context.read<StudyPlannerViewModel>().setTabIndex(2);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 1,
+                      ),
+                      icon: const Icon(Icons.play_circle_fill_rounded, size: 18),
+                      label: Text(
+                        'Start 25m Focus Session for ${subject.name}',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+
+                  // Exam Date Banner & Change Date Button
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF59E0B).withAlpha(80)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.event_available_rounded, size: 16, color: Color(0xFFB45309)),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Target Exam Date',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF78350F),
+                                  ),
+                                ),
+                                Text(
+                                  subject.examDate != null
+                                      ? '${_formatSubjectDate(subject.examDate!)} (${_subjectDaysLeft(subject.examDate!)})'
+                                      : 'No exam date set yet',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF92400E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: () => _pickExamDate(context, studyVm),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: Text(
+                            subject.examDate != null ? 'Edit Date' : 'Set Date',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFB45309),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Hub Segment Tabs
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        _buildTabChip(0, '📚 Lessons (${subject.topics.length})', color),
+                        _buildTabChip(1, '✅ To-Do (${subjectTasks.length})', color),
+                        _buildTabChip(2, '📝 Notes (${subjectNotes.length})', color),
+                        _buildTabChip(3, '📊 History (${subjectSessions.length})', color),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Tab 0: Lessons
+                  if (_selectedTab == 0) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Syllabus Lessons & Topics',
+                          style: GoogleFonts.lora(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _showAddTopicDialog(context, studyVm),
+                          icon: const Icon(Icons.add_rounded, size: 14),
+                          label: const Text('Add Topic'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: color,
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (subject.topics.isEmpty)
+                      Text(
+                        'No topics in syllabus yet. Tap "+ Add Topic" to add one.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                      )
+                    else
+                      ...subject.topics.map((t) => Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF131B24) : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE5DDD0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline_rounded, size: 16, color: Color(0xFF047857)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                t,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                context.read<PomodoroViewModel>().selectSubject(subject.id, subject.name);
+                                context.read<PomodoroViewModel>().selectTopic(t);
+                                context.read<StudyPlannerViewModel>().setTabIndex(2);
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: color.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.timer_outlined, size: 12, color: color),
+                                    const SizedBox(width: 3),
+                                    Text('Focus', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
+                              onPressed: () => studyVm.removeSubjectTopic(subject.id, t),
+                            ),
+                          ],
+                        ),
+                      )),
+                  ],
+
+                  // Tab 1: To-Do
+                  if (_selectedTab == 1) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${subject.name} Tasks',
+                          style: GoogleFonts.lora(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _showAddTaskDialog(context, studyVm),
+                          icon: const Icon(Icons.add_task_rounded, size: 14),
+                          label: const Text('Add Task'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: color,
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (subjectTasks.isEmpty)
+                      Text(
+                        'No tasks scheduled for ${subject.name}. Tap "+ Add Task" to create one.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                      )
+                    else
+                      ...subjectTasks.map((task) => Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF131B24) : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE5DDD0)),
+                        ),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: task.isCompleted,
+                              activeColor: const Color(0xFF047857),
+                              onChanged: (_) => studyVm.toggleTaskComplete(task.id),
+                            ),
+                            Expanded(
+                              child: Text(
+                                task.title,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
+                                  decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
+                              onPressed: () => studyVm.deleteTask(task.id),
+                            ),
+                          ],
+                        ),
+                      )),
+                  ],
+
+                  // Tab 2: Notes
+                  if (_selectedTab == 2) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${subject.name} Notes',
+                          style: GoogleFonts.lora(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _showAddNoteDialog(context, studyVm),
+                          icon: const Icon(Icons.post_add_rounded, size: 14),
+                          label: const Text('Add Note'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: color,
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (subjectNotes.isEmpty)
+                      Text(
+                        'No sticky notes for ${subject.name} yet.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                      )
+                    else
+                      ...subjectNotes.map((n) => Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF131B24) : const Color(0xFFFEF9C3),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFDE047).withAlpha(100)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  n.title,
+                                  style: GoogleFonts.lora(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF854D0E)),
+                                ),
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFF854D0E)),
+                                  onPressed: () => studyVm.deleteNote(n.id),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              n.content,
+                              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF713F12)),
+                            ),
+                          ],
+                        ),
+                      )),
+                  ],
+
+                  // Tab 3: History
+                  if (_selectedTab == 3) ...[
+                    Text(
+                      'Learning History (${subjectSessions.length} sessions)',
+                      style: GoogleFonts.lora(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (subjectSessions.isEmpty)
+                      Text(
+                        'No past Pomodoro sessions recorded for ${subject.name}. Tap "Start 25m Focus Session" above!',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                      )
+                    else
+                      ...subjectSessions.take(4).map((s) => Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF131B24) : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE5DDD0)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.history_rounded, size: 16, color: color),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${s.durationMinutes} min Session${s.notes != null ? " • ${s.notes}" : ""}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              _formatSubjectDate(s.startTime),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: isDark ? Colors.white60 : const Color(0xFF78716C),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabChip(int index, String label, Color color) {
+    final isSelected = _selectedTab == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color
+              : (isDark ? const Color(0xFF131B24) : const Color(0xFFEFE8DD)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white70 : const Color(0xFF4A423A)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _pickExamDate(BuildContext context, StudyPlannerViewModel studyVm) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: widget.subject.examDate ?? DateTime.now().add(const Duration(days: 30)),
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (picked != null) {
+      await studyVm.updateSubjectExamDate(widget.subject.id, picked);
+      setState(() {});
+    }
+  }
+
+  void _showAddTopicDialog(BuildContext context, StudyPlannerViewModel studyVm) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Add Syllabus Topic', style: GoogleFonts.lora(fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: controller,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Electromagnetism, Cell Division, Calculus',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final topic = controller.text.trim();
+              if (topic.isNotEmpty) {
+                await studyVm.addSubjectTopic(widget.subject.id, topic);
+                await studyVm.addCustomJourneyTopic(
+                  topicTitle: topic,
+                  subjectName: widget.subject.name,
+                );
+              }
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Add Topic'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddTaskDialog(BuildContext context, StudyPlannerViewModel studyVm) {
+    final titleController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Schedule Task for ${widget.subject.name}', style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: titleController,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Task Title',
+                hintText: 'e.g. Solve Chapter 3 Exercises, Revise Formulas',
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (titleController.text.trim().isNotEmpty) {
+                    final task = ScheduledTask(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      title: titleController.text.trim(),
+                      subjectId: widget.subject.id,
+                      subjectName: widget.subject.name,
+                      scheduledDate: DateTime.now(),
+                      startTime: '4:00 PM',
+                      endTime: '5:00 PM',
+                      isCompleted: false,
+                      priority: 'medium',
+                    );
+                    await studyVm.addTask(task);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  }
+                },
+                child: const Text('Add Task'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddNoteDialog(BuildContext context, StudyPlannerViewModel studyVm) {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Sticky Note for ${widget.subject.name}', style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Formula, Important Concept'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: contentController,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'Notes', hintText: 'Type your notes...'),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (titleController.text.trim().isNotEmpty && contentController.text.trim().isNotEmpty) {
+                    final note = QuickNote(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      title: titleController.text.trim(),
+                      content: contentController.text.trim(),
+                      subjectId: widget.subject.id,
+                      subjectName: widget.subject.name,
+                      createdAt: DateTime.now(),
+                      updatedAt: DateTime.now(),
+                    );
+                    await studyVm.addNote(note);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  }
+                },
+                child: const Text('Save Note'),
+              ),
+            ),
+          ],
         ),
       ),
     );

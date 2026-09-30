@@ -29,6 +29,7 @@ class PomodoroViewModel extends ChangeNotifier {
   int _completedSessions = 0;
   String? _selectedSubjectId;
   String? _selectedSubjectName;
+  String? _selectedTopic;
 
   PomodoroPhase get phase => _phase;
   int get secondsRemaining => _secondsRemaining;
@@ -36,6 +37,7 @@ class PomodoroViewModel extends ChangeNotifier {
   int get completedSessions => _completedSessions;
   String? get selectedSubjectId => _selectedSubjectId;
   String? get selectedSubjectName => _selectedSubjectName;
+  String? get selectedTopic => _selectedTopic;
 
   String get formattedTime {
     final minutes = _secondsRemaining ~/ 60;
@@ -84,6 +86,12 @@ class PomodoroViewModel extends ChangeNotifier {
   void selectSubject(String? id, String? name) {
     _selectedSubjectId = id;
     _selectedSubjectName = name;
+    _selectedTopic = null; // Clear specific topic when subject switches
+    notifyListeners();
+  }
+
+  void selectTopic(String? topic) {
+    _selectedTopic = topic;
     notifyListeners();
   }
 
@@ -407,9 +415,9 @@ class StudyPlannerViewModel extends ChangeNotifier {
   }
 
   Future<void> addSubject(Subject subject) async {
-    if (_profile == null) return;
-    final updated = _profile!.copyWith(
-      subjects: [..._profile!.subjects, subject],
+    final current = _profile ?? const UserProfile(name: 'Student', educationType: 'college', subjects: []);
+    final updated = current.copyWith(
+      subjects: [...current.subjects, subject],
     );
     await saveProfile(updated);
   }
@@ -420,6 +428,40 @@ class StudyPlannerViewModel extends ChangeNotifier {
         _profile!.subjects.map((s) => s.id == subject.id ? subject : s).toList();
     final updated = _profile!.copyWith(subjects: updatedSubjects);
     await saveProfile(updated);
+  }
+
+  Future<void> addSubjectTopic(String subjectId, String topic) async {
+    if (_profile == null || topic.trim().isEmpty) return;
+    final subIndex = _profile!.subjects.indexWhere((s) => s.id == subjectId);
+    if (subIndex == -1) return;
+    final target = _profile!.subjects[subIndex];
+    if (!target.topics.contains(topic.trim())) {
+      final updated = target.copyWith(topics: [...target.topics, topic.trim()]);
+      await updateSubject(updated);
+    }
+  }
+
+  Future<void> removeSubjectTopic(String subjectId, String topic) async {
+    if (_profile == null) return;
+    final subIndex = _profile!.subjects.indexWhere((s) => s.id == subjectId);
+    if (subIndex == -1) return;
+    final target = _profile!.subjects[subIndex];
+    final updated = target.copyWith(topics: target.topics.where((t) => t != topic.trim()).toList());
+    await updateSubject(updated);
+  }
+
+  Future<void> updateSubjectExamDate(String subjectId, DateTime examDate) async {
+    if (_profile == null) return;
+    final subIndex = _profile!.subjects.indexWhere((s) => s.id == subjectId);
+    if (subIndex == -1) return;
+    final target = _profile!.subjects[subIndex];
+    final updated = target.copyWith(examDate: examDate);
+    await updateSubject(updated);
+  }
+
+  Future<void> reloadSessions() async {
+    _sessions = await _repository.getSessions();
+    notifyListeners();
   }
 
   Future<void> deleteSubject(String subjectId) async {
