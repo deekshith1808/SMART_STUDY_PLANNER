@@ -246,44 +246,51 @@ class _JourneyScreenState extends State<JourneyScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'UNIT 1 • SEMESTER ROADMAP',
+                'UNIT 1 • ROADMAP',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: const Color(0xFFC2410C),
+                  color: isDark ? AppColors.darkPrimary : const Color(0xFFC2410C),
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  final activeHurdle = _resolveHurdle(progress);
-                  _showExamHurdleModal(context, vm, progress, targetHurdle: activeHurdle);
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF047857).withAlpha(25),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF047857).withAlpha(60),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.event_available_rounded,
-                          size: 13, color: Color(0xFF047857)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Exam: ${_resolveHurdle(progress).formattedExamDate} (${_resolveHurdle(progress).daysRemainingText})',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF047857),
-                        ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: GestureDetector(
+                  onTap: () {
+                    final activeHurdle = _resolveHurdle(progress);
+                    _showExamHurdleModal(context, vm, progress, targetHurdle: activeHurdle);
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF047857).withAlpha(25),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF047857).withAlpha(60),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.event_available_rounded,
+                            size: 13, color: Color(0xFF047857)),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            '${_resolveHurdle(progress).formattedExamDate} (${_resolveHurdle(progress).daysRemainingText})',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF047857),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -593,17 +600,21 @@ class _JourneyScreenState extends State<JourneyScreen>
                       Text(isUnlocked ? '⚔️' : '🔒',
                           style: const TextStyle(fontSize: 14)),
                       const SizedBox(width: 6),
-                      Text(
-                        isUnlocked
-                            ? 'HURDLE UNLOCKED!'
-                            : 'EXAM HURDLE: ${activeHurdle.subjectName.toUpperCase()}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                          color: isUnlocked
-                              ? const Color(0xFFB45309)
-                              : (isDark ? Colors.white70 : const Color(0xFF5A524A)),
+                      Flexible(
+                        child: Text(
+                          isUnlocked
+                              ? 'HURDLE UNLOCKED!'
+                              : 'EXAM HURDLE: ${activeHurdle.subjectName.toUpperCase()}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                            color: isUnlocked
+                                ? const Color(0xFFB45309)
+                                : (isDark ? Colors.white70 : const Color(0xFF5A524A)),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

@@ -912,43 +912,52 @@ class _AICoachTabState extends State<_AICoachTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkPrimary.withAlpha(35)
-                                : const Color(0xFF6366F1).withAlpha(25),
-                            shape: BoxShape.circle,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkPrimary.withAlpha(35)
+                                  : const Color(0xFF6366F1).withAlpha(25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Text('🤖', style: TextStyle(fontSize: 24)),
                           ),
-                          child: const Text('🤖', style: TextStyle(fontSize: 24)),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'AI Cognitive Study Coach',
-                              style: GoogleFonts.lora(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : AppColors.textPrimary,
-                              ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'AI Cognitive Study Coach',
+                                  style: GoogleFonts.lora(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : AppColors.textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Autonomous Syllabus & Exam Intelligence',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppColors.darkPrimary : const Color(0xFF6366F1),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Autonomous Syllabus & Exam Intelligence',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.darkPrimary : const Color(0xFF6366F1),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
