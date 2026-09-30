@@ -58,56 +58,211 @@ class JourneyNode {
     );
   }
 
+  /// Default thematic icon for any academic subject
+  static String getSubjectDefaultIcon(String subjectName) {
+    final s = subjectName.toLowerCase();
+    if (s.contains('physic') || s.contains('quantum') || s.contains('mechanic') || s.contains('thermo') || s.contains('optic')) {
+      return '⚛️';
+    }
+    if (s.contains('math') || s.contains('calculus') || s.contains('algebra') || s.contains('geometr') || s.contains('statist')) {
+      return '🧮';
+    }
+    if (s.contains('chem') || s.contains('organic') || s.contains('inorganic') || s.contains('biochem')) {
+      return '🧪';
+    }
+    if (s.contains('medic') || s.contains('anatom') || s.contains('physiol') || s.contains('pharm') || s.contains('pathol') || s.contains('clinic') || s.contains('health') || s.contains('surg')) {
+      return '🩺';
+    }
+    if (s.contains('bio') || s.contains('genet') || s.contains('botan') || s.contains('zoolog') || s.contains('cell')) {
+      return '🦉';
+    }
+    if (s.contains('comput') || s.contains('program') || s.contains('code') || s.contains('softw') || s.contains('data struct') || s.contains('network') || s.contains('ai')) {
+      return '💻';
+    }
+    if (s.contains('art') || s.contains('hist') || s.contains('sociol') || s.contains('politic') || s.contains('litera') || s.contains('eng') || s.contains('philos')) {
+      return '🎨';
+    }
+    if (s.contains('law') || s.contains('legal') || s.contains('crimin') || s.contains('justic') || s.contains('constitut')) {
+      return '⚖️';
+    }
+    if (s.contains('commerc') || s.contains('account') || s.contains('financ') || s.contains('econ') || s.contains('market') || s.contains('busin')) {
+      return '📈';
+    }
+    return '📘';
+  }
+
   /// Distinct thematic icon for every level
   String get displayIcon {
     if (icon != null && icon!.isNotEmpty) return icon!;
 
     if (type == NodeType.chest) return '🎁';
     if (type == NodeType.hurdle) return '🏰';
-    if (type == NodeType.quiz) return '⚡';
 
     final text = '$title $subjectName'.toLowerCase();
-    // Physics
-    if (text.contains('quantum') || text.contains('atom')) return '⚛️';
-    if (text.contains('wave') || text.contains('optic')) return '🔬';
-    if (text.contains('thermo') || text.contains('heat') || text.contains('energy')) return '🔥';
-    if (text.contains('magnet') || text.contains('electric') || text.contains('circuit')) return '⚡';
-    if (text.contains('mechanic') || text.contains('motion') || text.contains('force')) return '🚀';
-    if (text.contains('physic')) return '🔭';
+
+    // Physics - comprehensive detection for any physics topic or level!
+    if (text.contains('physic') ||
+        text.contains('quantum') ||
+        text.contains('atom') ||
+        text.contains('wave') ||
+        text.contains('optic') ||
+        text.contains('thermo') ||
+        text.contains('heat') ||
+        text.contains('energy') ||
+        text.contains('magnet') ||
+        text.contains('electric') ||
+        text.contains('circuit') ||
+        text.contains('mechanic') ||
+        text.contains('motion') ||
+        text.contains('force') ||
+        text.contains('gravit') ||
+        text.contains('kinematic') ||
+        text.contains('rotat') ||
+        text.contains('relativ') ||
+        text.contains('nuclear') ||
+        text.contains('radiation')) {
+      if (text.contains('magnet')) return '🧲';
+      if (text.contains('electric') || text.contains('circuit')) return '⚡';
+      if (text.contains('thermo') || text.contains('heat')) return '🔥';
+      if (text.contains('optic') || text.contains('wave')) return '🔬';
+      if (text.contains('force') || text.contains('motion') || text.contains('kinematic') || text.contains('rocket')) return '🚀';
+      return '⚛️'; // Primary Physics icon: Atom!
+    }
+
+    // Medicine & Health Sciences
+    if (text.contains('medic') ||
+        text.contains('anatom') ||
+        text.contains('physiol') ||
+        text.contains('pathol') ||
+        text.contains('pharm') ||
+        text.contains('clinic') ||
+        text.contains('health') ||
+        text.contains('surg') ||
+        text.contains('biochem') ||
+        text.contains('nurs') ||
+        text.contains('hospital')) {
+      if (text.contains('pharm') || text.contains('drug') || text.contains('medic')) return '💊';
+      if (text.contains('biochem') || text.contains('pathol')) return '🧬';
+      return '🩺'; // Stethoscope
+    }
+
+    // Arts, Humanities & Social Sciences
+    if (text.contains('art') ||
+        text.contains('hist') ||
+        text.contains('sociol') ||
+        text.contains('politic') ||
+        text.contains('psychol') ||
+        text.contains('philos') ||
+        text.contains('litera') ||
+        text.contains('eng') ||
+        text.contains('drama') ||
+        text.contains('music') ||
+        text.contains('theat') ||
+        text.contains('humanit') ||
+        text.contains('geograph')) {
+      if (text.contains('hist')) return '📜';
+      if (text.contains('geograph') || text.contains('earth')) return '🌍';
+      if (text.contains('politic') || text.contains('philos')) return '🏛️';
+      if (text.contains('litera') || text.contains('eng') || text.contains('grammar')) return '📖';
+      if (text.contains('psychol')) return '🧠';
+      return '🎨';
+    }
 
     // Mathematics
-    if (text.contains('calculus') || text.contains('integral') || text.contains('deriv')) return '♾️';
-    if (text.contains('algebra') || text.contains('matrix') || text.contains('linear')) return '🔢';
-    if (text.contains('geometr') || text.contains('trig')) return '📐';
-    if (text.contains('statist') || text.contains('probab')) return '📊';
-    if (text.contains('math')) return '🧮';
+    if (text.contains('math') ||
+        text.contains('calculus') ||
+        text.contains('integral') ||
+        text.contains('deriv') ||
+        text.contains('algebra') ||
+        text.contains('matrix') ||
+        text.contains('linear') ||
+        text.contains('geometr') ||
+        text.contains('trig') ||
+        text.contains('statist') ||
+        text.contains('probab')) {
+      if (text.contains('calculus') || text.contains('integral')) return '♾️';
+      if (text.contains('algebra') || text.contains('matrix')) return '🔢';
+      if (text.contains('geometr') || text.contains('trig')) return '📐';
+      if (text.contains('statist')) return '📊';
+      return '🧮';
+    }
 
     // Chemistry
-    if (text.contains('organic') || text.contains('carbon')) return '⚗️';
-    if (text.contains('reaction') || text.contains('bond') || text.contains('molecul')) return '🧪';
-    if (text.contains('solution') || text.contains('acid') || text.contains('base')) return '💧';
-    if (text.contains('chem')) return '🧪';
+    if (text.contains('chem') ||
+        text.contains('organic') ||
+        text.contains('carbon') ||
+        text.contains('reaction') ||
+        text.contains('bond') ||
+        text.contains('molecul') ||
+        text.contains('solution') ||
+        text.contains('acid') ||
+        text.contains('base')) {
+      if (text.contains('organic') || text.contains('carbon')) return '⚗️';
+      return '🧪';
+    }
 
-    // Computer Science
-    if (text.contains('algorithm') || text.contains('logic')) return '🧠';
-    if (text.contains('data') || text.contains('struct')) return '🗄️';
-    if (text.contains('ai') || text.contains('robot') || text.contains('learn')) return '🤖';
-    if (text.contains('network') || text.contains('web') || text.contains('cloud')) return '🌐';
-    if (text.contains('code') || text.contains('program') || text.contains('comput')) return '💻';
+    // Computer Science & Tech
+    if (text.contains('algorithm') ||
+        text.contains('logic') ||
+        text.contains('data') ||
+        text.contains('struct') ||
+        text.contains('ai') ||
+        text.contains('robot') ||
+        text.contains('network') ||
+        text.contains('web') ||
+        text.contains('cloud') ||
+        text.contains('code') ||
+        text.contains('program') ||
+        text.contains('comput') ||
+        text.contains('softw') ||
+        text.contains('dbms')) {
+      if (text.contains('ai') || text.contains('robot')) return '🤖';
+      if (text.contains('network') || text.contains('web')) return '🌐';
+      if (text.contains('algorithm') || text.contains('logic')) return '🧠';
+      if (text.contains('data') || text.contains('struct') || text.contains('dbms')) return '🗄️';
+      return '💻';
+    }
 
-    // Biology
-    if (text.contains('genet') || text.contains('dna') || text.contains('rna')) return '🧬';
-    if (text.contains('plant') || text.contains('botan') || text.contains('photo')) return '🌿';
-    if (text.contains('cell') || text.contains('microb') || text.contains('virus')) return '🦠';
-    if (text.contains('bio')) return '🦉';
+    // Biology & Life Sciences
+    if (text.contains('genet') ||
+        text.contains('dna') ||
+        text.contains('rna') ||
+        text.contains('plant') ||
+        text.contains('botan') ||
+        text.contains('photo') ||
+        text.contains('cell') ||
+        text.contains('microb') ||
+        text.contains('virus') ||
+        text.contains('bio')) {
+      if (text.contains('genet') || text.contains('dna') || text.contains('rna')) return '🧬';
+      if (text.contains('plant') || text.contains('botan')) return '🌿';
+      if (text.contains('cell') || text.contains('microb') || text.contains('virus')) return '🦠';
+      return '🦉';
+    }
 
-    // Humanities & Languages
-    if (text.contains('history') || text.contains('civic')) return '📜';
-    if (text.contains('geograph') || text.contains('earth')) return '🌍';
-    if (text.contains('litera') || text.contains('read') || text.contains('grammar') || text.contains('eng')) return '📖';
-    if (text.contains('law') || text.contains('justic')) return '⚖️';
-    if (text.contains('business') || text.contains('econ') || text.contains('financ')) return '📈';
+    // Law & Legal Studies
+    if (text.contains('law') ||
+        text.contains('justic') ||
+        text.contains('court') ||
+        text.contains('legal') ||
+        text.contains('crimin') ||
+        text.contains('constitut')) {
+      return '⚖️';
+    }
 
+    // Business, Commerce & Finance
+    if (text.contains('business') ||
+        text.contains('econ') ||
+        text.contains('financ') ||
+        text.contains('market') ||
+        text.contains('account') ||
+        text.contains('commerc')) {
+      if (text.contains('financ') || text.contains('money')) return '💰';
+      if (text.contains('business') || text.contains('manage')) return '💼';
+      return '📈';
+    }
+
+    if (type == NodeType.quiz) return '⚡';
     if (type == NodeType.practice) return '✍️';
     return '📘';
   }
@@ -544,6 +699,7 @@ class JourneyProgress {
           stars: isAlreadyDone ? 3 : 0,
           stage: stage,
           horizontalOffset: offset,
+          icon: JourneyNode.getSubjectDefaultIcon(subject.name),
         ));
 
         if (nodes.length % 3 == 0) stage++;
@@ -566,6 +722,7 @@ class JourneyProgress {
             stars: 0,
             stage: (i ~/ 3) + 1,
             horizontalOffset: offsets[i % offsets.length],
+            icon: JourneyNode.getSubjectDefaultIcon(s.name),
           ));
         }
       } else {

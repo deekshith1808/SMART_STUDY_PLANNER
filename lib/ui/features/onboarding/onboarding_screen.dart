@@ -237,6 +237,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onAdd: (s) => setState(() => _subjects.add(s)),
           onRemove: (i) => setState(() => _subjects.removeAt(i)),
           educationType: 'college',
+          branch: _branch,
         ),
       ]);
     } else {
@@ -832,12 +833,13 @@ class _BranchPage extends StatelessWidget {
   }
 }
 
-class _SubjectsPage extends StatelessWidget {
+class _SubjectsPage extends StatefulWidget {
   final List<String> subjects;
   final TextEditingController controller;
   final ValueChanged<String> onAdd;
   final ValueChanged<int> onRemove;
   final String educationType;
+  final String? branch;
 
   const _SubjectsPage({
     required this.subjects,
@@ -845,29 +847,128 @@ class _SubjectsPage extends StatelessWidget {
     required this.onAdd,
     required this.onRemove,
     required this.educationType,
+    this.branch,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final schoolPresets = [
-      'Mathematics',
-      'Physics',
-      'Chemistry',
-      'Biology',
-      'English',
-      'Computer Science',
-      'Social Studies',
-    ];
-    final collegePresets = [
+  State<_SubjectsPage> createState() => _SubjectsPageState();
+}
+
+class _SubjectsPageState extends State<_SubjectsPage> {
+  late String _activeStream;
+
+  static const Map<String, List<String>> _branchPresets = {
+    'Medical & Health': [
+      'Anatomy',
+      'Human Physiology',
+      'Biochemistry',
+      'Pharmacology',
+      'Pathology',
+      'Microbiology',
+      'Forensic Medicine',
+      'Clinical Medicine',
+    ],
+    'Arts & Humanities': [
+      'English Literature',
+      'World History',
+      'Political Science',
+      'Sociology',
+      'Psychology',
+      'Philosophy',
+      'Economics',
+      'Journalism & Mass Comm',
+    ],
+    'Engineering & Tech': [
       'Data Structures & Algorithms',
       'Operating Systems',
       'Database Systems (DBMS)',
       'Computer Networks',
       'Engineering Mathematics',
       'Software Engineering',
-      'Web Development',
-    ];
-    final presets = educationType == 'school' ? schoolPresets : collegePresets;
+      'Digital Electronics',
+      'Artificial Intelligence',
+    ],
+    'Commerce & Mgmt': [
+      'Financial Accounting',
+      'Business Law',
+      'Microeconomics',
+      'Macroeconomics',
+      'Corporate Finance',
+      'Marketing Management',
+      'Cost & Management Accounting',
+      'Business Statistics',
+    ],
+    'Natural Sciences': [
+      'Advanced Calculus',
+      'Classical & Quantum Mechanics',
+      'Organic Chemistry',
+      'Inorganic Chemistry',
+      'Molecular & Cell Biology',
+      'Applied Statistics',
+      'Genetics',
+      'Electromagnetism',
+    ],
+    'Law & Governance': [
+      'Constitutional Law',
+      'Criminal Law & IPC',
+      'Law of Contracts',
+      'Jurisprudence',
+      'Administrative Law',
+      'International Law',
+      'Corporate Law',
+      'Human Rights Law',
+    ],
+    'Architecture & Design': [
+      'Architectural Design',
+      'Building Construction',
+      'History of Architecture',
+      'Structural Engineering',
+      'Urban Planning',
+      'Digital 3D Modeling',
+    ],
+    'Agriculture': [
+      'Agronomy & Crop Science',
+      'Soil Science & Chemistry',
+      'Plant Pathology',
+      'Agricultural Economics',
+      'Genetics & Plant Breeding',
+      'Horticulture',
+    ],
+    'Other Studies': [
+      'Research Methodology',
+      'Critical Thinking & Logic',
+      'Academic Writing',
+      'Applied Statistics',
+      'Project Management',
+    ],
+  };
+
+  static const List<String> _schoolPresets = [
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'English',
+    'Computer Science',
+    'Social Studies',
+    'Environmental Science',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _activeStream = widget.branch ?? 'Medical & Health';
+    if (!_branchPresets.containsKey(_activeStream)) {
+      _activeStream = _branchPresets.keys.first;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isCollege = widget.educationType == 'college';
+    final presets = isCollege
+        ? (_branchPresets[_activeStream] ?? _branchPresets.values.first)
+        : _schoolPresets;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -894,9 +995,51 @@ class _SubjectsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          // College Stream Switcher if College
+          if (isCollege) ...[
+            Text(
+              'Select College Field / Stream:',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _branchPresets.keys.map((stream) {
+                  final isSelected = _activeStream == stream;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(stream),
+                      selected: isSelected,
+                      selectedColor: AppColors.primary,
+                      labelStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _activeStream = stream);
+                        }
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
           // Preset Chips Section
           Text(
-            'Recommended for ${educationType == 'school' ? 'School' : 'College'} (Tap to add):',
+            isCollege
+                ? 'Recommended for $_activeStream (Tap to add):'
+                : 'Recommended for School (Tap to add):',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -908,18 +1051,18 @@ class _SubjectsPage extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: presets.map((preset) {
-              final isEnrolled = subjects
+              final isEnrolled = widget.subjects
                   .any((s) => s.toLowerCase() == preset.toLowerCase());
               return FilterChip(
                 label: Text(preset),
                 selected: isEnrolled,
                 onSelected: (selected) {
                   if (selected) {
-                    onAdd(preset);
+                    widget.onAdd(preset);
                   } else {
-                    final idx = subjects.indexWhere(
+                    final idx = widget.subjects.indexWhere(
                         (s) => s.toLowerCase() == preset.toLowerCase());
-                    if (idx != -1) onRemove(idx);
+                    if (idx != -1) widget.onRemove(idx);
                   }
                 },
                 selectedColor: AppColors.primary.withAlpha(35),
@@ -956,7 +1099,7 @@ class _SubjectsPage extends StatelessWidget {
             children: [
               Expanded(
                 child: TextField(
-                  controller: controller,
+                  controller: widget.controller,
                   textCapitalization: TextCapitalization.words,
                   style: GoogleFonts.plusJakartaSans(fontSize: 15, color: AppColors.textPrimary),
                   decoration: InputDecoration(
@@ -973,8 +1116,8 @@ class _SubjectsPage extends StatelessWidget {
                   ),
                   onSubmitted: (v) {
                     if (v.trim().isNotEmpty) {
-                      onAdd(v.trim());
-                      controller.clear();
+                      widget.onAdd(v.trim());
+                      widget.controller.clear();
                     }
                   },
                 ),
@@ -982,9 +1125,9 @@ class _SubjectsPage extends StatelessWidget {
               const SizedBox(width: 10),
               ElevatedButton(
                 onPressed: () {
-                  if (controller.text.trim().isNotEmpty) {
-                    onAdd(controller.text.trim());
-                    controller.clear();
+                  if (widget.controller.text.trim().isNotEmpty) {
+                    widget.onAdd(widget.controller.text.trim());
+                    widget.controller.clear();
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -996,10 +1139,10 @@ class _SubjectsPage extends StatelessWidget {
               ),
             ],
           ),
-          if (subjects.isNotEmpty) ...[
+          if (widget.subjects.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
-              'Enrolled Subjects (${subjects.length})',
+              'Enrolled Subjects (${widget.subjects.length})',
               style: GoogleFonts.lora(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -1007,7 +1150,7 @@ class _SubjectsPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...subjects.asMap().entries.map((e) {
+            ...widget.subjects.asMap().entries.map((e) {
               final color = AppColors.subjectColors[e.key % AppColors.subjectColors.length];
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
@@ -1043,7 +1186,7 @@ class _SubjectsPage extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => onRemove(e.key),
+                      onTap: () => widget.onRemove(e.key),
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(

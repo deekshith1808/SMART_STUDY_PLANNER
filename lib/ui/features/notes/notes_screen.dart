@@ -195,129 +195,131 @@ class _NotesScreenState extends State<NotesScreen> {
             right: 20,
             top: 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFD6CBC0),
-                    borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFD6CBC0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'New Sticky Note 📝',
-                style: GoogleFonts.lora(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 18),
-              TextField(
-                controller: titleCtrl,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  labelStyle: TextStyle(
-                    color: isDark ? AppColors.darkTextSecondary : null,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.title_rounded,
-                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                const SizedBox(height: 16),
+                Text(
+                  'New Sticky Note 📝',
+                  style: GoogleFonts.lora(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: contentCtrl,
-                maxLines: 4,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Content / Formula',
-                  labelStyle: TextStyle(
-                    color: isDark ? AppColors.darkTextSecondary : null,
+                const SizedBox(height: 18),
+                TextField(
+                  controller: titleCtrl,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
-                  prefixIcon: Icon(
-                    Icons.notes_rounded,
-                    color: isDark ? AppColors.darkAccent : AppColors.accent,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (subjects.isNotEmpty)
-                DropdownButtonFormField<String>(
-                  initialValue: selectedSubjectId,
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                   decoration: InputDecoration(
-                    labelText: 'Related Subject',
+                    labelText: 'Title',
                     labelStyle: TextStyle(
                       color: isDark ? AppColors.darkTextSecondary : null,
                     ),
                     prefixIcon: Icon(
-                      Icons.book_rounded,
-                      color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                      Icons.title_rounded,
+                      color: isDark ? AppColors.darkPrimary : AppColors.primary,
                     ),
                   ),
-                  items: subjects.map((s) => DropdownMenuItem(
-                    value: s.id,
-                    child: Text(
-                      s.name,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contentCtrl,
+                  maxLines: 4,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Content / Formula',
+                    labelStyle: TextStyle(
+                      color: isDark ? AppColors.darkTextSecondary : null,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.notes_rounded,
+                      color: isDark ? AppColors.darkAccent : AppColors.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (subjects.isNotEmpty)
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSubjectId,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    decoration: InputDecoration(
+                      labelText: 'Related Subject',
+                      labelStyle: TextStyle(
+                        color: isDark ? AppColors.darkTextSecondary : null,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.book_rounded,
+                        color: isDark ? AppColors.darkSecondary : AppColors.secondary,
                       ),
                     ),
-                  )).toList(),
-                  onChanged: (id) {
-                    setModalState(() {
-                      selectedSubjectId = id;
-                      selectedSubjectName = subjects.firstWhere((s) => s.id == id).name;
-                    });
-                  },
-                ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (titleCtrl.text.trim().isNotEmpty) {
-                      final note = QuickNote(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: titleCtrl.text.trim(),
-                        content: contentCtrl.text.trim(),
-                        subjectId: selectedSubjectId ?? '',
-                        subjectName: selectedSubjectName ?? 'General Note',
-                        createdAt: DateTime.now(),
-                        updatedAt: DateTime.now(),
-                      );
-                      vm.addNote(note);
-                      Navigator.pop(ctx);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.darkSecondary : AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    items: subjects.map((s) => DropdownMenuItem(
+                      value: s.id,
+                      child: Text(
+                        s.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                      ),
+                    )).toList(),
+                    onChanged: (id) {
+                      setModalState(() {
+                        selectedSubjectId = id;
+                        selectedSubjectName = subjects.firstWhere((s) => s.id == id).name;
+                      });
+                    },
                   ),
-                  child: const Text('Pin to Notes'),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (titleCtrl.text.trim().isNotEmpty) {
+                        final note = QuickNote(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          title: titleCtrl.text.trim(),
+                          content: contentCtrl.text.trim(),
+                          subjectId: selectedSubjectId ?? '',
+                          subjectName: selectedSubjectName ?? 'General Note',
+                          createdAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                        );
+                        vm.addNote(note);
+                        Navigator.pop(ctx);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? AppColors.darkSecondary : AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('Pin to Notes'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

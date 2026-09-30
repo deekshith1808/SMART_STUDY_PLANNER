@@ -72,7 +72,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               ),
               labelColor: isDark ? AppColors.darkPrimary : AppColors.primary,
               unselectedLabelColor:
-                  isDark ? Colors.white60 : AppColors.textSecondary,
+                  isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
               indicatorColor:
                   isDark ? AppColors.darkPrimary : AppColors.primary,
               indicatorWeight: 3,
@@ -996,7 +996,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     height: 1.45,
-                    color: isDark ? Colors.white70 : const Color(0xFF4B433B),
+                    color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF4B433B),
                   ),
                 ),
               ],
@@ -1050,7 +1050,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       height: 1.45,
-                      color: isDark ? Colors.white70 : const Color(0xFF0369A1),
+                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0369A1),
                     ),
                   ),
                 ),
@@ -1092,7 +1092,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                   'No exam hurdles configured yet. Add them in the Quest or Subjects tab!',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: isDark ? Colors.white60 : AppColors.textSecondary,
+                    color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -1173,7 +1173,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                           'Exam Goal: ${hurdle.targetScore.toInt()}%',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: isDark ? Colors.white60 : AppColors.textSecondary,
+                            color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -1229,7 +1229,7 @@ class _AICoachTabState extends State<_AICoachTab> {
             'Tap a core concept or test your understanding with instant Feynman explanations:',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: isDark ? Colors.white60 : AppColors.textSecondary,
+              color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 10),
@@ -1252,7 +1252,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                     labelStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4B433B)),
+                      color: isSelected ? Colors.white : (isDark ? const Color(0xFFF1F5F9) : const Color(0xFF4B433B)),
                     ),
                   ),
                 );
@@ -1321,7 +1321,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         height: 1.45,
-                        color: isDark ? Colors.white70 : const Color(0xFF2D2620),
+                        color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF2D2620),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1430,7 +1430,7 @@ class _AICoachTabState extends State<_AICoachTab> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textSecondary),
+              color: isSelected ? Colors.white : (isDark ? const Color(0xFFF1F5F9) : AppColors.textSecondary),
             ),
           ),
         ),
@@ -1474,7 +1474,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     height: 1.4,
-                    color: isDark ? Colors.white60 : AppColors.textSecondary,
+                    color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
                   ),
                 ),
               ],

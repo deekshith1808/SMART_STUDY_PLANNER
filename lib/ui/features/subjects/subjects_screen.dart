@@ -533,7 +533,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white70 : AppColors.textSecondary,
+                            color: isDark ? const Color(0xFFE2E8F0) : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -715,7 +715,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                     children: [
                       Text(
                         'Target Score Goal',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : AppColors.textSecondary),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary),
                       ),
                       const Spacer(),
                       Text(
@@ -857,14 +857,14 @@ class _SubjectCardState extends State<_SubjectCard> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF5A524A),
                             ),
                           ),
                           const SizedBox(width: 4),
                           Icon(
                             _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
                             size: 18,
-                            color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                            color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF5A524A),
                           ),
                         ],
                       ),
@@ -1013,7 +1013,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                       if (subject.topics.isEmpty)
                         Text(
                           'No topics in syllabus yet. Tap "+ Add Topic" to add one.',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFFCBD5E1) : Colors.black54),
                         )
                       else
                         ...subject.topics.map((t) => Container(
@@ -1101,7 +1101,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                       if (subjectTasks.isEmpty)
                         Text(
                           'No tasks scheduled for ${subject.name}. Tap "+ Add Task" to create one.',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFFCBD5E1) : Colors.black54),
                         )
                       else
                         ...subjectTasks.map((task) => Container(
@@ -1168,7 +1168,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                       if (subjectNotes.isEmpty)
                         Text(
                           'No sticky notes for ${subject.name} yet.',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFFCBD5E1) : Colors.black54),
                         )
                       else
                         ...subjectNotes.map((n) => Container(
@@ -1187,12 +1187,12 @@ class _SubjectCardState extends State<_SubjectCard> {
                                 children: [
                                   Text(
                                     n.title,
-                                    style: GoogleFonts.lora(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF854D0E)),
+                                    style: GoogleFonts.lora(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF854D0E)),
                                   ),
                                   IconButton(
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
-                                    icon: const Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFF854D0E)),
+                                    icon: Icon(Icons.delete_outline_rounded, size: 14, color: isDark ? const Color(0xFFFDE047) : const Color(0xFF854D0E)),
                                     onPressed: () => studyVm.deleteNote(n.id),
                                   ),
                                 ],
@@ -1200,7 +1200,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                               const SizedBox(height: 2),
                               Text(
                                 n.content,
-                                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF713F12)),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF713F12)),
                               ),
                             ],
                           ),
@@ -1221,7 +1221,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                       if (subjectSessions.isEmpty)
                         Text(
                           'No past Pomodoro sessions recorded for ${subject.name}. Tap "Start 25m Focus Session" above!',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFFCBD5E1) : Colors.black54),
                         )
                       else
                         ...subjectSessions.take(4).map((s) => Container(
@@ -1250,7 +1250,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                                 _formatSubjectDate(s.startTime),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
-                                  color: isDark ? Colors.white60 : const Color(0xFF78716C),
+                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
                                 ),
                               ),
                             ],
@@ -2067,6 +2067,7 @@ class _SubjectFormState extends State<_SubjectForm> {
   late int _selectedColorIndex;
   late List<String> _topics;
   late List<String> _completedTopics;
+  String? _streamFilter;
 
   @override
   void initState() {
@@ -2129,21 +2130,98 @@ class _SubjectFormState extends State<_SubjectForm> {
               const SizedBox(height: 6),
               Builder(
                 builder: (context) {
-                  final edType = context.read<StudyPlannerViewModel>().profile?.educationType ?? 'college';
-                  final presets = edType == 'school'
-                      ? ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer Science']
-                      : ['Data Structures', 'Operating Systems', 'DBMS', 'Computer Networks', 'Engineering Maths', 'Software Engineering'];
-                  return Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: presets.map((p) => ActionChip(
-                      label: Text(p, style: const TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        setState(() {
-                          _nameCtrl.text = p;
-                        });
-                      },
-                    )).toList(),
+                  final profile = context.read<StudyPlannerViewModel>().profile;
+                  final edType = profile?.educationType ?? 'college';
+                  final defaultStream = profile?.branch ?? 'Medical & Health';
+                  
+                  final Map<String, List<String>> collegeStreamPresets = {
+                    'Medical & Health': [
+                      'Anatomy', 'Human Physiology', 'Biochemistry', 'Pharmacology',
+                      'Pathology', 'Microbiology', 'Forensic Medicine', 'Clinical Medicine'
+                    ],
+                    'Arts & Humanities': [
+                      'English Literature', 'World History', 'Political Science', 'Sociology',
+                      'Psychology', 'Philosophy', 'Economics', 'Journalism & Mass Comm'
+                    ],
+                    'Engineering & Tech': [
+                      'Data Structures', 'Operating Systems', 'DBMS', 'Computer Networks',
+                      'Engineering Maths', 'Software Engineering', 'Digital Electronics'
+                    ],
+                    'Commerce & Mgmt': [
+                      'Financial Accounting', 'Business Law', 'Microeconomics', 'Macroeconomics',
+                      'Corporate Finance', 'Marketing Management', 'Cost Accounting'
+                    ],
+                    'Natural Sciences': [
+                      'Advanced Calculus', 'Classical Mechanics', 'Organic Chemistry',
+                      'Inorganic Chemistry', 'Molecular Biology', 'Applied Statistics'
+                    ],
+                    'Law & Governance': [
+                      'Constitutional Law', 'Criminal Law & IPC', 'Law of Contracts',
+                      'Jurisprudence', 'Administrative Law', 'International Law'
+                    ],
+                  };
+
+                  if (edType == 'school') {
+                    final presets = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer Science', 'Social Studies'];
+                    return Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: presets.map((p) => ActionChip(
+                        label: Text(p, style: const TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          setState(() {
+                            _nameCtrl.text = p;
+                          });
+                        },
+                      )).toList(),
+                    );
+                  }
+
+                  // College: Show active stream with switcher
+                  _streamFilter ??= (collegeStreamPresets.containsKey(defaultStream) ? defaultStream : 'Medical & Health');
+                  final streamPresets = collegeStreamPresets[_streamFilter] ?? collegeStreamPresets.values.first;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: collegeStreamPresets.keys.map((st) {
+                            final isSel = _streamFilter == st;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                label: Text(st, style: const TextStyle(fontSize: 10)),
+                                selected: isSel,
+                                selectedColor: AppColors.primary,
+                                labelStyle: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                                  color: isSel ? Colors.white : AppColors.textPrimary,
+                                ),
+                                onSelected: (sel) {
+                                  if (sel) setState(() => _streamFilter = st);
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: streamPresets.map((p) => ActionChip(
+                          label: Text(p, style: const TextStyle(fontSize: 11)),
+                          onPressed: () {
+                            setState(() {
+                              _nameCtrl.text = p;
+                            });
+                          },
+                        )).toList(),
+                      ),
+                    ],
                   );
                 },
               ),

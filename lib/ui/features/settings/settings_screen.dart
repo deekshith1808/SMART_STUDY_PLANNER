@@ -204,7 +204,7 @@ class SettingsScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFEF3C7),
+                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEF3C7),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(tip.emoji, style: const TextStyle(fontSize: 16)),
@@ -215,7 +215,7 @@ class SettingsScreen extends StatelessWidget {
                                       tip.tip,
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13,
-                                        color: AppColors.textPrimary,
+                                        color: isDark ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                                         height: 1.4,
                                       ),
                                     ),
@@ -305,7 +305,7 @@ class SettingsScreen extends StatelessWidget {
                     Center(
                       child: Text(
                         'StudySmart • Handcrafted for calm focus',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                       ),
                     ),
                     if (!vm.isParentDevice) ...[
@@ -322,13 +322,13 @@ class SettingsScreen extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.shield_outlined, size: 13, color: AppColors.textSecondary.withAlpha(90)),
+                                Icon(Icons.shield_outlined, size: 13, color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary.withAlpha(90)),
                                 const SizedBox(width: 5),
                                 Text(
                                   'Guardian Access',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
-                                    color: AppColors.textSecondary.withAlpha(120),
+                                    color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary.withAlpha(120),
                                   ),
                                 ),
                               ],
@@ -368,7 +368,7 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFCBD5E1) : AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -522,7 +522,7 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFCBD5E1) : AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -668,6 +668,7 @@ class _SettingsToggle extends StatelessWidget {
     final color = isDark ? AppColors.darkPrimary : AppColors.primary;
 
     return ListTile(
+      onTap: () => onChanged(!value),
       leading: Container(
         width: 38,
         height: 38,

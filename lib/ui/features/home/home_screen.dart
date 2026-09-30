@@ -269,22 +269,31 @@ class _QuickNoteDialogState extends State<_QuickNoteDialog> {
       _selectedSubjectName = subjects.first.name;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AlertDialog(
+      backgroundColor: isDark ? const Color(0xFF1E2835) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFFEF3C7),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text('📌', style: TextStyle(fontSize: 18)),
           ),
           const SizedBox(width: 10),
-          Text(
-            'Quick Sticky Note',
-            style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          Expanded(
+            child: Text(
+              'Quick Sticky Note',
+              style: GoogleFonts.lora(
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -304,14 +313,21 @@ class _QuickNoteDialogState extends State<_QuickNoteDialog> {
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _selectedSubjectId,
                 decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 items: [
-                  const DropdownMenuItem(value: '', child: Text('General / Miscellaneous')),
-                  ...subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))),
+                  const DropdownMenuItem(
+                    value: '',
+                    child: Text('General / Miscellaneous', overflow: TextOverflow.ellipsis),
+                  ),
+                  ...subjects.map((s) => DropdownMenuItem(
+                        value: s.id,
+                        child: Text(s.name, overflow: TextOverflow.ellipsis),
+                      )),
                 ],
                 onChanged: (val) {
                   setState(() {
@@ -425,40 +441,45 @@ class _DashboardTab extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withAlpha(40),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      _greeting(),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withAlpha(40),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        _greeting(),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                profile?.name ?? 'Mindful Student',
-                                style: GoogleFonts.lora(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  profile?.name ?? 'Mindful Student',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lora(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Row(
                             children: [
                               Container(
@@ -622,30 +643,38 @@ class _ExamJourneyBanner extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(isUrgent ? 55 : 40),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(isUrgent ? '🚨' : '🎯', style: const TextStyle(fontSize: 12)),
-                      const SizedBox(width: 4),
-                      Text(
-                        isUrgent
-                            ? 'EXAM ${hurdle.daysRemaining == 0 ? "TODAY" : hurdle.daysRemaining == 1 ? "TOMORROW" : "IN 2 DAYS"}: ${hurdle.subjectName.toUpperCase()}'
-                            : 'NEXT HURDLE: ${hurdle.daysRemaining} DAYS LEFT',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.8,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(isUrgent ? 55 : 40),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(isUrgent ? '🚨' : '🎯', style: const TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            isUrgent
+                                ? 'EXAM ${hurdle.daysRemaining == 0 ? "TODAY" : hurdle.daysRemaining == 1 ? "TOMORROW" : "IN 2 DAYS"}: ${hurdle.subjectName.toUpperCase()}'
+                                : 'NEXT HURDLE: ${hurdle.daysRemaining} DAYS LEFT',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -737,20 +766,27 @@ class _UpcomingExamsStrip extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                const Text('📅', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
-                Text(
-                  'Upcoming Exam Schedule',
-                  style: GoogleFonts.lora(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            Flexible(
+              child: Row(
+                children: [
+                  const Text('📅', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Upcoming Exam Schedule',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lora(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => showDialog(
                 context: context,
@@ -1254,20 +1290,26 @@ class _StickyNotesPinboardSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                const Text('📌', style: TextStyle(fontSize: 18)),
-                const SizedBox(width: 6),
-                Text(
-                  'Quick Sticky Notes Pinboard',
-                  style: GoogleFonts.lora(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            Expanded(
+              child: Row(
+                children: [
+                  const Text('📌', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Quick Sticky Notes Pinboard',
+                      style: GoogleFonts.lora(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => showDialog(context: context, builder: (_) => const _QuickNoteDialog()),
               child: Container(
@@ -1476,9 +1518,11 @@ class _StickyNotesPinboardSection extends StatelessWidget {
   }
 
   void _showNoteDetail(BuildContext context, QuickNote note, StudyPlannerViewModel vm) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E2835) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -1487,41 +1531,54 @@ class _StickyNotesPinboardSection extends StatelessWidget {
             Expanded(
               child: Text(
                 note.title,
-                style: GoogleFonts.lora(fontWeight: FontWeight.w700, fontSize: 17),
+                style: GoogleFonts.lora(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
               ),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(20),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                note.subjectName.isNotEmpty ? note.subjectName : 'General',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  note.subjectName.isNotEmpty ? note.subjectName : 'General',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              note.content,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.45),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Created on ${_formatNoteDate(note.createdAt)}',
-              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                note.content,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Created on ${_formatNoteDate(note.createdAt)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton.icon(

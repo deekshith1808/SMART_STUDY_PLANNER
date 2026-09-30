@@ -312,8 +312,8 @@ class _ScheduleTaskCard extends StatelessWidget {
                 color: task.isCompleted ? AppColors.primary : Colors.transparent,
                 border: Border.all(
                   color: task.isCompleted
-                      ? AppColors.primary
-                      : (isDark ? Colors.white38 : const Color(0xFFC7BCAD)),
+                      ? (isDark ? AppColors.darkPrimary : AppColors.primary)
+                      : (isDark ? const Color(0xFF64748B) : const Color(0xFFC7BCAD)),
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -334,7 +334,7 @@ class _ScheduleTaskCard extends StatelessWidget {
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: task.isCompleted
-                        ? (isDark ? Colors.white38 : AppColors.textSecondary)
+                        ? (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary)
                         : (isDark ? Colors.white : AppColors.textPrimary),
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                   ),
@@ -345,7 +345,7 @@ class _ScheduleTaskCard extends StatelessWidget {
                     task.description!,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -357,20 +357,31 @@ class _ScheduleTaskCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withAlpha(20),
+                        color: (isDark ? AppColors.darkPrimary : AppColors.primary).withAlpha(25),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         task.subjectName,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.access_time_rounded, size: 12, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 12,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${task.startTime} - ${task.endTime}',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -839,25 +850,31 @@ class _AddTaskFormState extends State<_AddTaskForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final subjects = widget.vm.profile?.subjects ?? [];
 
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.85,
       maxChildSize: 0.95,
-      builder: (_, ctrl) => SingleChildScrollView(
-        controller: ctrl,
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24, left: 20, right: 20, top: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: const Color(0xFFD6CBC0), borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
-            Text(
-              'Add Study Session 🗓️',
-              style: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-            ),
-            const SizedBox(height: 18),
+      builder: (_, ctrl) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          controller: ctrl,
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24, left: 20, right: 20, top: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : const Color(0xFFD6CBC0), borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 16),
+              Text(
+                'Add Study Session 🗓️',
+                style: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w700, color: isDark ? Colors.white : AppColors.textPrimary),
+              ),
+              const SizedBox(height: 18),
             TextField(
               controller: _titleCtrl,
               style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600),
@@ -896,7 +913,7 @@ class _AddTaskFormState extends State<_AddTaskForm> {
               ],
             ),
             const SizedBox(height: 18),
-            Text('Priority', style: GoogleFonts.lora(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            Text('Priority', style: GoogleFonts.lora(fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : AppColors.textPrimary)),
             const SizedBox(height: 8),
             Row(
               children: ['low', 'medium', 'high'].map((p) {
@@ -911,9 +928,9 @@ class _AddTaskFormState extends State<_AddTaskForm> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? color : Colors.white,
+                          color: isSelected ? color : (isDark ? const Color(0xFF1E2835) : Colors.white),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isSelected ? color : AppColors.borderLight),
+                          border: Border.all(color: isSelected ? color : (isDark ? Colors.white12 : AppColors.borderLight)),
                         ),
                         child: Text(
                           p.toUpperCase(),
@@ -921,7 +938,7 @@ class _AddTaskFormState extends State<_AddTaskForm> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : AppColors.textPrimary),
                           ),
                         ),
                       ),
@@ -946,8 +963,9 @@ class _AddTaskFormState extends State<_AddTaskForm> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _save() {
     if (_titleCtrl.text.trim().isEmpty) return;

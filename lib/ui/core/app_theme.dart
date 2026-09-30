@@ -40,7 +40,7 @@ class AppColors {
   static const darkSurface = Color(0xFF1E1B4B); // Deep Royal Indigo / Purple Surface
   static const darkSurfaceVariant = Color(0xFF1E293B);
   static const darkTextPrimary = Color(0xFFF8FAFC); // Crisp Bright White
-  static const darkTextSecondary = Color(0xFF94A3B8); // Muted Cool Slate
+  static const darkTextSecondary = Color(0xFFCBD5E1); // Luminous Bright Silver Slate (Enhanced Visibility)
   static const darkBorder = Color(0xFF1E293B); // Dark Slate Border
   static const darkBorderAccent = Color(0xFF38BDF8); // Electric Blue Accent
 
@@ -261,7 +261,7 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF090D16),
         selectedItemColor: AppColors.darkPrimary,
-        unselectedItemColor: Color(0xFF64748B),
+        unselectedItemColor: Color(0xFF94A3B8),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 8,

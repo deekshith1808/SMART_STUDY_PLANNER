@@ -420,9 +420,9 @@ class _PhaseSelector extends StatelessWidget {
                             color: isSelected
                                 ? Colors.white
                                 : (isLocked
-                                    ? (isDark ? Colors.white30 : Colors.black26)
+                                    ? (isDark ? const Color(0xFF64748B) : Colors.black26)
                                     : (isDark
-                                        ? Colors.white70
+                                        ? const Color(0xFFE2E8F0)
                                         : AppColors.textSecondary)),
                           ),
                         ),
@@ -505,7 +505,7 @@ class _SubjectSelector extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF5A524A),
               ),
             ),
             if (selectedSubject != null)
@@ -667,62 +667,68 @@ class _CircularTimer extends StatelessWidget {
       children: [
         // Active Subject & Topic Focus Banner above timer
         if (selectedSubject != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: accentColor.withAlpha(25),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: accentColor.withAlpha(80), width: 1.2),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  selectedSubject!.name.toUpperCase(),
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: accentColor,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '• Target: ${selectedSubject!.targetMarks.toStringAsFixed(0)}%',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF6B6258),
-                  ),
-                ),
-                if (selectedSubject!.examDate != null) ...[
-                  const SizedBox(width: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: accentColor.withAlpha(25),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: accentColor.withAlpha(80), width: 1.2),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    width: 8,
+                    height: 8,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(6),
+                      color: accentColor,
+                      shape: BoxShape.circle,
                     ),
-                    child: Text(
-                      'Exam in ${_daysRemainingText(selectedSubject!.examDate!)}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFB45309),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    selectedSubject!.name.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '• Target: ${selectedSubject!.targetMarks.toStringAsFixed(0)}%',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF6B6258),
+                    ),
+                  ),
+                  if (selectedSubject!.examDate != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Exam in ${_daysRemainingText(selectedSubject!.examDate!)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFB45309),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -731,6 +737,7 @@ class _CircularTimer extends StatelessWidget {
         // Active Topic Banner if student picked a specific topic
         if (vm.selectedTopic != null) ...[
           Container(
+            constraints: const BoxConstraints(maxWidth: 320),
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
@@ -743,12 +750,16 @@ class _CircularTimer extends StatelessWidget {
               children: [
                 const Icon(Icons.bookmark_added_rounded, size: 14, color: Color(0xFF047857)),
                 const SizedBox(width: 6),
-                Text(
-                  'Target Lesson: ${vm.selectedTopic!}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF047857),
+                Flexible(
+                  child: Text(
+                    'Target Lesson: ${vm.selectedTopic!}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF047857),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -802,7 +813,7 @@ class _CircularTimer extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: vm.isRunning
                       ? const Color(0xFF047857)
-                      : (isDark ? Colors.white60 : AppColors.textSecondary),
+                      : (isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary),
                 ),
               ),
             ],
@@ -1069,6 +1080,8 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                     children: [
                       Text(
                         sub.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.lora(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -1076,17 +1089,15 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            'Target Marks: ${sub.targetMarks.toStringAsFixed(0)}% • Current: ${sub.marks.toStringAsFixed(1)}%',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Target Marks: ${sub.targetMarks.toStringAsFixed(0)}% • Current: ${sub.marks.toStringAsFixed(1)}%',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
+                        ),
                       ),
                     ],
                   ),
@@ -1231,14 +1242,19 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Syllabus Lessons & Topics to Learn',
-              style: GoogleFonts.lora(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: widget.isDark ? Colors.white : AppColors.textPrimary,
+            Expanded(
+              child: Text(
+                'Syllabus Lessons & Topics to Learn',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lora(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: widget.isDark ? Colors.white : AppColors.textPrimary,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             TextButton.icon(
               onPressed: () => _showAddTopicDialog(context, sub),
               icon: const Icon(Icons.add_rounded, size: 16),
@@ -1265,7 +1281,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
               'No syllabus topics added yet. Tap "+ Add Topic" to add your lessons!',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+                color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
               ),
             ),
           )
@@ -1306,7 +1322,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                       size: 20,
                       color: isCompleted
                           ? const Color(0xFF047857)
-                          : (widget.isDark ? Colors.white38 : const Color(0xFFA8A29E)),
+                          : (widget.isDark ? const Color(0xFF94A3B8) : const Color(0xFFA8A29E)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1391,14 +1407,19 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '${sub.name} To-Do List',
-              style: GoogleFonts.lora(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: widget.isDark ? Colors.white : AppColors.textPrimary,
+            Expanded(
+              child: Text(
+                '${sub.name} To-Do List',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lora(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: widget.isDark ? Colors.white : AppColors.textPrimary,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             TextButton.icon(
               onPressed: () => _showAddTaskDialog(context, sub),
               icon: const Icon(Icons.add_task_rounded, size: 16),
@@ -1425,7 +1446,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
               'No tasks scheduled for ${sub.name}. Tap "+ Add Task" to schedule one!',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+                color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
               ),
             ),
           )
@@ -1496,7 +1517,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                                 '${task.startTime} - ${task.endTime}',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
-                                  color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+                                  color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
                                 ),
                               ),
                             ],
@@ -1525,14 +1546,19 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '${sub.name} Study Notes & Insights',
-              style: GoogleFonts.lora(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: widget.isDark ? Colors.white : AppColors.textPrimary,
+            Expanded(
+              child: Text(
+                '${sub.name} Study Notes & Insights',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lora(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: widget.isDark ? Colors.white : AppColors.textPrimary,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             TextButton.icon(
               onPressed: () => _showAddNoteDialog(context, sub),
               icon: const Icon(Icons.post_add_rounded, size: 16),
@@ -1559,7 +1585,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
               'No sticky notes taken for ${sub.name} yet. Jot down key formulas & chapter notes!',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+                color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
               ),
             ),
           )
@@ -1591,13 +1617,13 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                           style: GoogleFonts.lora(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF854D0E),
+                            color: widget.isDark ? Colors.white : const Color(0xFF854D0E),
                           ),
                         ),
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Color(0xFF854D0E)),
+                          icon: Icon(Icons.delete_outline_rounded, size: 16, color: widget.isDark ? const Color(0xFFFDE047) : const Color(0xFF854D0E)),
                           onPressed: () => widget.studyVm.deleteNote(note.id),
                         ),
                       ],
@@ -1607,7 +1633,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                       note.content,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: widget.isDark ? Colors.white70 : const Color(0xFF713F12),
+                        color: widget.isDark ? const Color(0xFFE2E8F0) : const Color(0xFF713F12),
                         height: 1.35,
                       ),
                     ),
@@ -1617,7 +1643,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFFA16207),
+                        color: widget.isDark ? const Color(0xFFFDE047) : const Color(0xFFA16207),
                       ),
                     ),
                   ],
@@ -1640,6 +1666,8 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
       children: [
         Text(
           '${sub.name} Study History & Analytics',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.lora(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -1681,7 +1709,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
               'No study sessions logged for ${sub.name} yet. Hit Start above to record your first Pomodoro!',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+                color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
               ),
             ),
           )
@@ -1741,7 +1769,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
                       _formatDate(sess.startTime),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
-                        color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+                        color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
                       ),
                     ),
                   ],
@@ -1769,7 +1797,7 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: widget.isDark ? Colors.white60 : const Color(0xFF78716C),
+            color: widget.isDark ? const Color(0xFFCBD5E1) : const Color(0xFF78716C),
           ),
         ),
       ],
@@ -1839,62 +1867,69 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Padding(
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Schedule Task for ${sub.name}', style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 12),
-              TextField(
-                controller: titleController,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Task Title',
-                  hintText: 'e.g. Solve Chapter 3 Exercises, Revise Formulas',
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Schedule Task for ${sub.name}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: ['low', 'medium', 'high'].map((p) {
-                  final isSelected = priority == p;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(p.toUpperCase()),
-                      selected: isSelected,
-                      onSelected: (_) => setModalState(() => priority = p),
-                      selectedColor: widget.accentColor,
-                      labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (titleController.text.trim().isNotEmpty) {
-                      final task = ScheduledTask(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: titleController.text.trim(),
-                        subjectId: sub.id,
-                        subjectName: sub.name,
-                        scheduledDate: DateTime.now(),
-                        startTime: '4:00 PM',
-                        endTime: '5:00 PM',
-                        isCompleted: false,
-                        priority: priority,
-                      );
-                      await widget.studyVm.addTask(task);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: widget.accentColor),
-                  child: const Text('Add Task to Timetable'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleController,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Task Title',
+                    hintText: 'e.g. Solve Chapter 3 Exercises, Revise Formulas',
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                Row(
+                  children: ['low', 'medium', 'high'].map((p) {
+                    final isSelected = priority == p;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(p.toUpperCase()),
+                        selected: isSelected,
+                        onSelected: (_) => setModalState(() => priority = p),
+                        selectedColor: widget.accentColor,
+                        labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (titleController.text.trim().isNotEmpty) {
+                        final task = ScheduledTask(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          title: titleController.text.trim(),
+                          subjectId: sub.id,
+                          subjectName: sub.name,
+                          scheduledDate: DateTime.now(),
+                          startTime: '4:00 PM',
+                          endTime: '5:00 PM',
+                          isCompleted: false,
+                          priority: priority,
+                        );
+                        await widget.studyVm.addTask(task);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: widget.accentColor),
+                    child: const Text('Add Task to Timetable'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1911,46 +1946,53 @@ class _SubjectFocusHubState extends State<_SubjectFocusHub> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Quick Sticky Note for ${sub.name}', style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Key Formula, Important Derivation'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: contentController,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Notes', hintText: 'Type your thoughts or key concepts...'),
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (titleController.text.trim().isNotEmpty && contentController.text.trim().isNotEmpty) {
-                    final note = QuickNote(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      title: titleController.text.trim(),
-                      content: contentController.text.trim(),
-                      subjectId: sub.id,
-                      subjectName: sub.name,
-                      createdAt: DateTime.now(),
-                      updatedAt: DateTime.now(),
-                    );
-                    await widget.studyVm.addNote(note);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: widget.accentColor),
-                child: const Text('Save Note'),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quick Sticky Note for ${sub.name}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lora(fontSize: 18, fontWeight: FontWeight.w700),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Key Formula, Important Derivation'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: contentController,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Notes', hintText: 'Type your thoughts or key concepts...'),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleController.text.trim().isNotEmpty && contentController.text.trim().isNotEmpty) {
+                      final note = QuickNote(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: titleController.text.trim(),
+                        content: contentController.text.trim(),
+                        subjectId: sub.id,
+                        subjectName: sub.name,
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      );
+                      await widget.studyVm.addNote(note);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: widget.accentColor),
+                  child: const Text('Save Note'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

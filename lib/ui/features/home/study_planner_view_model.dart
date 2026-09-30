@@ -379,7 +379,7 @@ class PomodoroViewModel extends ChangeNotifier {
       workMinutes = settings['workMinutes'] ?? 25;
       shortBreakMinutes = settings['shortBreak'] ?? 5;
       longBreakMinutes = settings['longBreak'] ?? 15;
-      sessionsBeforeLongBreak = settings['sessionsBeforeLongBreak'] ?? 4;
+      sessionsBeforeLongBreak = 2; // Strict requirement: long break only exists after 2 sessions
       _secondsRemaining = workMinutes * 60;
       _shieldConfig = await _repository.getFocusShieldConfig();
       notifyListeners();
@@ -1007,12 +1007,17 @@ class StudyPlannerViewModel extends ChangeNotifier {
     NodeType type = NodeType.lesson,
     int xpReward = 40,
     String? description,
+    String? icon,
   }) async {
     final current = journeyProgress;
     const offsets = [0.0, -0.45, 0.35, -0.4, 0.0, 0.45];
     final newIndex = current.nodes.length;
     final newOffset = offsets[newIndex % offsets.length];
     final newStage = (newIndex ~/ 3) + 1;
+
+    final resolvedIcon = (icon != null && icon.trim().isNotEmpty)
+        ? icon.trim()
+        : JourneyNode.getSubjectDefaultIcon(subjectName);
 
     final newNode = JourneyNode(
       id: 'custom_node_${DateTime.now().millisecondsSinceEpoch}',
@@ -1027,6 +1032,7 @@ class StudyPlannerViewModel extends ChangeNotifier {
       stars: 0,
       stage: newStage,
       horizontalOffset: newOffset,
+      icon: resolvedIcon,
     );
 
     final updatedNodes = List<JourneyNode>.from(current.nodes)..add(newNode);

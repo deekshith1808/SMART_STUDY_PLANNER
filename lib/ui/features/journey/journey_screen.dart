@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/domain/models/learning_journey.dart';
+import 'package:smart_study_planner/domain/models/user_profile.dart';
 
 class JourneyScreen extends StatefulWidget {
   const JourneyScreen({super.key});
@@ -857,27 +858,14 @@ class _JourneyScreenState extends State<JourneyScreen>
 
   void _handleNodeTap(
       BuildContext context, StudyPlannerViewModel vm, JourneyNode node) {
-    if (node.status == NodeStatus.locked) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '🔒 Conquer the previous level to unlock "${node.title}"!',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: const Color(0xFF2D2620),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     _showNodeModal(context, vm, node);
   }
 
   void _showNodeModal(
       BuildContext context, StudyPlannerViewModel vm, JourneyNode node) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isCompleted = node.status == NodeStatus.completed;
+    final newTopicController = TextEditingController();
+    bool isAddingTopic = false;
 
     showModalBottomSheet(
       context: context,
@@ -887,206 +875,462 @@ class _JourneyScreenState extends State<JourneyScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 28,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with Type Tag and XP Reward
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFC2410C).withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${node.subjectName.toUpperCase()} • STAGE ${node.stage}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
-                        color: const Color(0xFFC2410C),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFF59E0B)),
-                    ),
-                    child: Row(
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final isCompleted = node.status == NodeStatus.completed;
+            final isLocked = node.status == NodeStatus.locked;
+            final subjects = vm.profile?.subjects ?? [];
+            Subject? matchedSubject;
+            for (final s in subjects) {
+              if (s.name.toLowerCase() == node.subjectName.toLowerCase()) {
+                matchedSubject = s;
+                break;
+              }
+            }
+
+            final Set<String> allTopics = {
+              if (matchedSubject != null) ...matchedSubject.topics,
+              node.title,
+            };
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 28,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header with Type Tag and XP Reward
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('⚡', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '+${node.xpReward} XP',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFFB45309),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC2410C).withAlpha(25),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${node.subjectName.toUpperCase()} • STAGE ${node.stage}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.0,
+                                color: const Color(0xFFC2410C),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF59E0B)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('⚡', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '+${node.xpReward} XP',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFFB45309),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
+                    const SizedBox(height: 14),
 
-              // Title with Thematic Icon
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    node.displayIcon,
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      node.title,
-                      style: GoogleFonts.lora(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF2D2620),
+                    // Title with Thematic Icon
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          node.displayIcon,
+                          style: const TextStyle(fontSize: 26),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            node.title,
+                            style: GoogleFonts.lora(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF2D2620),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Description
+                    Text(
+                      node.description,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF6B6258),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+                    const SizedBox(height: 16),
 
-              // Description
-              Text(
-                node.description,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  height: 1.45,
-                  color: isDark ? Colors.white70 : const Color(0xFF6B6258),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Completion Status Pill
-              if (isCompleted)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1FAE5),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF059669)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle_rounded,
-                          color: Color(0xFF059669), size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Mastered! 3/3 Stars Earned ⭐️⭐️⭐️',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF047857),
+                    // Status Pill
+                    if (isCompleted)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD1FAE5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFF059669)),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 22),
-
-              // Action 1: Launch Pomodoro Sprint
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  // Switch to Pomodoro Tab (index 2)
-                  vm.setTabIndex(2);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC2410C),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 2,
-                ),
-                icon: const Icon(Icons.timer_rounded, size: 20),
-                label: Text(
-                  'Launch 25m Focus Sprint',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Action 2: Quick Quiz or Mark Mastered
-              OutlinedButton.icon(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await vm.completeJourneyNode(node.id);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
+                        child: Row(
                           children: [
-                            const Text('🎉', style: TextStyle(fontSize: 20)),
-                            const SizedBox(width: 10),
+                            const Icon(Icons.check_circle_rounded,
+                                color: Color(0xFF059669), size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Mastered! 3/3 Stars Earned ⭐️⭐️⭐️',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF047857),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (isLocked)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF3ECE0),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color: isDark ? Colors.white24 : AppColors.borderLight),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.lock_outline_rounded,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF796F65), size: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Step Conquered! +${node.xpReward} XP added to your Streak!',
+                                'Conquer previous level to unlock focus timer & stars',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF796F65),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        backgroundColor: const Color(0xFF047857),
-                        behavior: SnackBarBehavior.floating,
                       ),
-                    );
-                  }
-                },
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  side: BorderSide(
-                    color: isDark ? Colors.white24 : const Color(0xFFE8DFD3),
-                    width: 1.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.verified_rounded,
-                    size: 18, color: Color(0xFF047857)),
-                label: Text(
-                  isCompleted ? 'Practice Again (+10 XP)' : 'Mark Mastered (+${node.xpReward} XP)',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF2D2620),
-                  ),
+
+                    const SizedBox(height: 18),
+
+                    // --- SECTION: Topics Inside This Level ---
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAF7F2),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE8DFD3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(node.displayIcon, style: const TextStyle(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Topics in ${node.subjectName} (${allTopics.length})',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Topics List
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: allTopics.map((top) {
+                              final isCurrentLevel = top.toLowerCase().trim() == node.title.toLowerCase().trim();
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: isCurrentLevel
+                                      ? (isDark ? AppColors.darkPrimary.withAlpha(40) : const Color(0xFFC2410C).withAlpha(20))
+                                      : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isCurrentLevel
+                                        ? (isDark ? AppColors.darkPrimary : const Color(0xFFC2410C))
+                                        : (isDark ? const Color(0xFF475569) : const Color(0xFFD6CBC0)),
+                                    width: isCurrentLevel ? 1.5 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isCurrentLevel ? Icons.stars_rounded : Icons.check_circle_outline_rounded,
+                                      size: 13,
+                                      color: isCurrentLevel
+                                          ? (isDark ? AppColors.darkPrimary : const Color(0xFFC2410C))
+                                          : const Color(0xFF047857),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      top,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: isCurrentLevel ? FontWeight.w700 : FontWeight.w500,
+                                        color: isCurrentLevel
+                                            ? (isDark ? Colors.white : const Color(0xFFC2410C))
+                                            : (isDark ? const Color(0xFFE2E8F0) : AppColors.textPrimary),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+
+                          const SizedBox(height: 12),
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+
+                          // Add New Topic Input
+                          Text(
+                            'Add New Topic to this Level / Subject:',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: newTopicController,
+                                  textCapitalization: TextCapitalization.words,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    color: isDark ? Colors.white : AppColors.textPrimary,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'e.g. Wave Optics, Kinematics',
+                                    hintStyle: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
+                                    ),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(
+                                        color: isDark ? const Color(0xFF475569) : AppColors.borderLight,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(
+                                        color: isDark ? const Color(0xFF475569) : AppColors.borderLight,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: isAddingTopic
+                                    ? null
+                                    : () async {
+                                        final topicText = newTopicController.text.trim();
+                                        if (topicText.isEmpty) return;
+                                        setModalState(() => isAddingTopic = true);
+                                        try {
+                                          if (matchedSubject != null) {
+                                            await vm.addSubjectTopic(matchedSubject.id, topicText);
+                                          }
+                                          await vm.addCustomJourneyTopic(
+                                            topicTitle: topicText,
+                                            subjectName: node.subjectName,
+                                            icon: node.displayIcon,
+                                          );
+                                          newTopicController.clear();
+                                          if (ctx.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('🎉 Added "$topicText" to ${node.subjectName}!'),
+                                                backgroundColor: const Color(0xFF047857),
+                                                behavior: SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          }
+                                        } finally {
+                                          setModalState(() => isAddingTopic = false);
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF047857),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: isAddingTopic
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.add_rounded, size: 16),
+                                          SizedBox(width: 4),
+                                          Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                        ],
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Action 1: Launch Focus Sprint
+                    ElevatedButton.icon(
+                      onPressed: isLocked
+                          ? null
+                          : () {
+                              Navigator.pop(ctx);
+                              final pomodoroVm = context.read<PomodoroViewModel>();
+                              if (matchedSubject != null) {
+                                pomodoroVm.selectSubject(matchedSubject.id, matchedSubject.name);
+                              } else {
+                                pomodoroVm.selectSubject(null, node.subjectName);
+                              }
+                              pomodoroVm.selectTopic(node.title);
+                              vm.setTabIndex(2);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC2410C),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 1,
+                      ),
+                      icon: const Icon(Icons.timer_rounded, size: 18),
+                      label: Text(
+                        'Launch 25m Focus Sprint on "${node.title}"',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Action 2: Mark Mastered
+                    OutlinedButton.icon(
+                      onPressed: isLocked
+                          ? null
+                          : () async {
+                              Navigator.pop(ctx);
+                              await vm.completeJourneyNode(node.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Text('🎉', style: TextStyle(fontSize: 20)),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Step Conquered! +${node.xpReward} XP added to your Streak!',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: const Color(0xFF047857),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(46),
+                        side: BorderSide(
+                          color: isDark ? const Color(0xFF475569) : const Color(0xFFE8DFD3),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.verified_rounded,
+                          size: 18, color: Color(0xFF047857)),
+                      label: Text(
+                        isCompleted
+                            ? 'Practice Again (+10 XP)'
+                            : 'Mark Level Mastered (+${node.xpReward} XP)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF2D2620),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -1372,12 +1616,14 @@ class _JourneyScreenState extends State<JourneyScreen>
                 children: [
                   const Text('🏰', style: TextStyle(fontSize: 22)),
                   const SizedBox(width: 8),
-                  Text(
-                    'Add Exam Hurdle',
-                    style: GoogleFonts.lora(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF2D2620),
+                  Expanded(
+                    child: Text(
+                      'Add Exam Hurdle',
+                      style: GoogleFonts.lora(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF2D2620),
+                      ),
                     ),
                   ),
                 ],
@@ -1559,12 +1805,14 @@ class _JourneyScreenState extends State<JourneyScreen>
                 children: [
                   const Text('✏️', style: TextStyle(fontSize: 22)),
                   const SizedBox(width: 8),
-                  Text(
-                    'Edit Exam Hurdle',
-                    style: GoogleFonts.lora(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF2D2620),
+                  Expanded(
+                    child: Text(
+                      'Edit Exam Hurdle',
+                      style: GoogleFonts.lora(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF2D2620),
+                      ),
                     ),
                   ),
                 ],
@@ -1750,9 +1998,11 @@ class _JourneyScreenState extends State<JourneyScreen>
           children: [
             const Text('🔥', style: TextStyle(fontSize: 24)),
             const SizedBox(width: 8),
-            Text(
-              '${progress.currentStreak}-Day Streak!',
-              style: GoogleFonts.lora(fontWeight: FontWeight.w700),
+            Expanded(
+              child: Text(
+                '${progress.currentStreak}-Day Streak!',
+                style: GoogleFonts.lora(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -1779,9 +2029,11 @@ class _JourneyScreenState extends State<JourneyScreen>
           children: [
             const Text('⚡', style: TextStyle(fontSize: 24)),
             const SizedBox(width: 8),
-            Text(
-              'Study Sparks (${progress.totalXp} XP)',
-              style: GoogleFonts.lora(fontWeight: FontWeight.w700),
+            Expanded(
+              child: Text(
+                'Study Sparks (${progress.totalXp} XP)',
+                style: GoogleFonts.lora(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -1905,7 +2157,7 @@ class _DuolingoNodeItem extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: node.status == NodeStatus.locked
-                        ? (isDark ? Colors.white38 : const Color(0xFF9CA3AF))
+                        ? (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF64748B))
                         : (isDark ? Colors.white : const Color(0xFF2D2620)),
                   ),
                 ),
@@ -1954,54 +2206,76 @@ class _DuolingoNodeItem extends StatelessWidget {
       bottomBorderColor = isDark ? const Color(0xFF0F172A) : const Color(0xFF94A3B8);
     }
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 68,
-          height: 68,
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            shape: BoxShape.circle,
-            border: Border(
-              bottom: BorderSide(color: bottomBorderColor, width: 5),
-              top: BorderSide(
-                color: Colors.white.withAlpha(isCompleted || isActive ? (isDark ? 90 : 70) : 30),
-                width: 2,
-              ),
-              left: BorderSide(
-                color: Colors.white.withAlpha(isCompleted || isActive ? 50 : 20),
-                width: 1,
-              ),
-              right: BorderSide(
-                color: Colors.black.withAlpha(isCompleted || isActive ? 40 : 20),
-                width: 1,
-              ),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? (isActive
-                        ? AppColors.darkPrimary.withAlpha(120)
-                        : (isCompleted
-                            ? const Color(0xFF10B981).withAlpha(80)
-                            : Colors.black.withAlpha(50)))
-                    : surfaceColor.withAlpha(isActive ? 110 : 40),
-                blurRadius: isActive ? 16 : 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Opacity(
-              opacity: isLocked ? 0.6 : 1.0,
-              child: Text(
-                node.displayIcon,
-                style: const TextStyle(fontSize: 28),
+    return SizedBox(
+      width: 70,
+      height: 74,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          // 3D bottom base for button depth
+          Positioned(
+            top: 5,
+            child: Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: bottomBorderColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? (isActive
+                            ? AppColors.darkPrimary.withAlpha(120)
+                            : (isCompleted
+                                ? const Color(0xFF10B981).withAlpha(80)
+                                : Colors.black.withAlpha(60)))
+                        : surfaceColor.withAlpha(isActive ? 110 : 40),
+                    blurRadius: isActive ? 16 : 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
+
+          // Main upper surface
+          Positioned(
+            top: 0,
+            child: Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: surfaceColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withAlpha(isCompleted || isActive ? (isDark ? 90 : 70) : 30),
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: Opacity(
+                  opacity: isLocked ? 0.85 : 1.0,
+                  child: Text(
+                    node.displayIcon,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      inherit: false,
+                      color: Colors.white,
+                      fontFamilyFallback: [
+                        'Noto Color Emoji',
+                        'Apple Color Emoji',
+                        'Segoe UI Emoji',
+                        'Noto Sans',
+                        'sans-serif',
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         // Small corner badge indicating status
         Positioned(
@@ -2041,8 +2315,9 @@ class _DuolingoNodeItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 
 class _TrailConnectorPainter extends CustomPainter {
@@ -2113,6 +2388,7 @@ class _JourneyCustomizerSheetState extends State<_JourneyCustomizerSheet> {
   NodeType _selectedType = NodeType.lesson;
   int _selectedXp = 40;
   bool _isAdding = false;
+  String? _selectedIcon;
 
   @override
   void initState() {
@@ -2120,8 +2396,10 @@ class _JourneyCustomizerSheetState extends State<_JourneyCustomizerSheet> {
     final subjects = widget.vm.profile?.subjects ?? [];
     if (subjects.isNotEmpty) {
       _selectedSubject = subjects.first.name;
+      _selectedIcon = JourneyNode.getSubjectDefaultIcon(_selectedSubject!);
     } else {
       _isCustomSubject = true;
+      _selectedIcon = '⚛️';
     }
   }
 
@@ -2377,6 +2655,7 @@ class _JourneyCustomizerSheetState extends State<_JourneyCustomizerSheet> {
                               setState(() {
                                 _isCustomSubject = false;
                                 _selectedSubject = sub.name;
+                                _selectedIcon = JourneyNode.getSubjectDefaultIcon(sub.name);
                               });
                             }
                           },
@@ -2538,6 +2817,54 @@ class _JourneyCustomizerSheetState extends State<_JourneyCustomizerSheet> {
                         isSelected: _selectedType == NodeType.chest,
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Level Thematic Icon Selector
+                  Text(
+                    'Level Thematic Icon',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B433B),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        '⚛️', '🔬', '🔭', '🧲', '⚡', '🧮', '📐', '🧪', '🩺', '💊',
+                        '🧬', '💻', '🤖', '🎨', '⚖️', '📈', '📚', '🏆', '🎯', '🔥',
+                      ].map((emoji) {
+                        final isSel = _selectedIcon == emoji;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: InkWell(
+                            onTap: () => setState(() => _selectedIcon = emoji),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isSel
+                                    ? const Color(0xFF047857).withAlpha(40)
+                                    : (isDark ? const Color(0xFF131B24) : const Color(0xFFF3ECE0)),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSel ? const Color(0xFF047857) : Colors.transparent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
 
                   const SizedBox(height: 14),
@@ -2933,6 +3260,7 @@ class _JourneyCustomizerSheetState extends State<_JourneyCustomizerSheet> {
         description: _descController.text.trim().isNotEmpty
             ? _descController.text.trim()
             : null,
+        icon: _selectedIcon ?? JourneyNode.getSubjectDefaultIcon(subjectName),
       );
 
       _topicController.clear();
