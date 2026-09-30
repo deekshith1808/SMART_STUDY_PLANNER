@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -92,7 +94,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final textPrimary = isDark ? const Color(0xFFF3ECE4) : const Color(0xFF2D2620);
     final textSecondary = isDark ? const Color(0xFFA69E96) : const Color(0xFF796F65);
     final accentTerracotta = isDark ? const Color(0xFFF97316) : const Color(0xFFC2410C);
-    final sageGreen = isDark ? const Color(0xFF34D399) : const Color(0xFF047857);
 
     return Scaffold(
       backgroundColor: warmBg,
@@ -140,30 +141,34 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: sageGreen.withAlpha(25),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: sageGreen.withAlpha(60),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.eco_rounded, size: 14, color: sageGreen),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Sparkle your Schedule',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: sageGreen,
-                              ),
+                      InkWell(
+                        onTap: () => _showFatherLoginDialog(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0284C7).withAlpha(25),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF0284C7).withAlpha(80),
                             ),
-                          ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shield_rounded, size: 14, color: Color(0xFF0284C7)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Father Login 🛡️',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0284C7),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -492,10 +497,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                   const SizedBox(height: 24),
 
-                  // Call to Action Button
+                  // Call to Action Buttons (Role Identification)
                   ElevatedButton(
                     onPressed: () {
-                      context.go('/onboarding');
+                      final vm = context.read<StudyPlannerViewModel>();
+                      vm.setStudentMode();
+                      if (vm.profile != null) {
+                        context.go('/home');
+                      } else {
+                        context.go('/onboarding');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentTerracotta,
@@ -511,9 +522,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Start Learning 📖',
+                          'I am a Student — Start Learning 📖',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.2,
                           ),
@@ -523,11 +534,224 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
+
+                  OutlinedButton(
+                    onPressed: () => _showFatherLoginDialog(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0284C7),
+                      side: const BorderSide(color: Color(0xFF0284C7), width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.shield_rounded, size: 18, color: Color(0xFF0284C7)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'I am the Father / Parent (Guardian Mode) 🛡️',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF0284C7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showFatherLoginDialog(BuildContext context) {
+    final vm = context.read<StudyPlannerViewModel>();
+    final phoneController = TextEditingController(text: vm.parentalConfig.fatherPhone ?? '');
+    final emailController = TextEditingController(text: vm.parentalConfig.fatherEmail ?? '');
+    final pinController = TextEditingController();
+    String? errorText;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.shield_rounded, color: Color(0xFF0284C7), size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Father Identification',
+                  style: GoogleFonts.lora(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Enter your Father\'s Mobile Number, Email ID, and Master PIN to identify as the father. '
+                  'The app will identify you and showcase full parental controls and live monitoring on this device.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: const Color(0xFF796F65),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Father's Mobile Number *",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. +91 9876543210 or 9876543210',
+                    prefixIcon: Icon(Icons.phone_iphone_rounded, color: Color(0xFF0284C7), size: 20),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Father's Email ID *",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. father.email@gmail.com',
+                    prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF7C3AED), size: 20),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Master PIN (4-Digits)",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: pinController,
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  maxLength: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Default: 1234',
+                    prefixIcon: Icon(Icons.lock_outline_rounded, size: 20),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                if (errorText != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, size: 16, color: Color(0xFFDC2626)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            errorText!,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFDC2626),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final phone = phoneController.text.trim();
+                final email = emailController.text.trim();
+                final pin = pinController.text.trim();
+
+                if (phone.isEmpty && email.isEmpty) {
+                  setDialogState(() {
+                    errorText = "Please enter father's mobile number or email ID.";
+                  });
+                  return;
+                }
+
+                final effectivePin = pin.isEmpty ? '1234' : pin;
+                final success = await vm.loginAsFather(
+                  email: email,
+                  phone: phone,
+                  pin: effectivePin,
+                );
+
+                if (success) {
+                  if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                  if (context.mounted) {
+                    context.go('/parent');
+                  }
+                } else {
+                  setDialogState(() {
+                    errorText = 'Incorrect Master PIN. (Default is 1234)';
+                  });
+                }
+              },
+              icon: const Icon(Icons.verified_rounded, size: 16),
+              label: const Text('Identify & Open Controller'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
         ),
       ),
     );

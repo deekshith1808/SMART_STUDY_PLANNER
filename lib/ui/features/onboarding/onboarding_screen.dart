@@ -17,8 +17,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageController = PageController();
   int _currentPage = 0;
 
-  // Step 1: name
+  // Step 1: student name & father/guardian contact
   final _nameController = TextEditingController();
+  final _fatherPhoneController = TextEditingController();
+  final _fatherEmailController = TextEditingController();
 
   // Step 2: education type
   String? _educationType; // 'school' or 'college'
@@ -106,6 +108,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       branch: _branch,
       course: _courseController.text.trim().isEmpty ? null : _courseController.text.trim(),
       subjects: subjectList,
+      fatherPhone: _fatherPhoneController.text.trim().isEmpty
+          ? null
+          : _fatherPhoneController.text.trim(),
+      fatherEmail: _fatherEmailController.text.trim().isEmpty
+          ? null
+          : _fatherEmailController.text.trim(),
     );
 
     await viewModel.saveProfile(profile);
@@ -116,6 +124,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _nameController.dispose();
+    _fatherPhoneController.dispose();
+    _fatherEmailController.dispose();
     _subjectController.dispose();
     _courseController.dispose();
     super.dispose();
@@ -181,7 +191,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   List<Widget> _buildPages() {
     final pages = <Widget>[
-      _NamePage(controller: _nameController, onChanged: () => setState(() {})),
+      _NamePage(
+        nameController: _nameController,
+        fatherPhoneController: _fatherPhoneController,
+        fatherEmailController: _fatherEmailController,
+        onChanged: () => setState(() {}),
+      ),
       _EducationTypePage(
         selected: _educationType,
         onSelect: (type) => setState(() {
@@ -226,6 +241,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       branch: _branch,
       course: _courseController.text,
       subjects: _subjects,
+      fatherPhone: _fatherPhoneController.text,
+      fatherEmail: _fatherEmailController.text,
     ));
 
     return pages;
@@ -274,10 +291,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _NamePage extends StatelessWidget {
-  final TextEditingController controller;
+  final TextEditingController nameController;
+  final TextEditingController fatherPhoneController;
+  final TextEditingController fatherEmailController;
   final VoidCallback onChanged;
 
-  const _NamePage({required this.controller, required this.onChanged});
+  const _NamePage({
+    required this.nameController,
+    required this.fatherPhoneController,
+    required this.fatherEmailController,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -302,39 +326,41 @@ class _NamePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Welcome aboard!',
+            'Student & Guardian Profile',
             style: GoogleFonts.lora(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
               letterSpacing: -0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
-            "Let's personalize your daily learning workspace and focus habits.",
+            "Set up your learning identity and link your father's contact for exam study alerts.",
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
+              fontSize: 13,
               height: 1.45,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 36),
+          const SizedBox(height: 28),
+
+          // 1. Student Name
           Text(
-            'What should we call you?',
+            'Student Full Name *',
             style: GoogleFonts.lora(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           TextField(
-            controller: controller,
+            controller: nameController,
             onChanged: (_) => onChanged(),
             textCapitalization: TextCapitalization.words,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
@@ -351,6 +377,145 @@ class _NamePage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 20),
+
+          // 2. Father's / Guardian's Mobile Number
+          Row(
+            children: [
+              const Icon(Icons.phone_iphone_rounded, size: 18, color: Color(0xFF0284C7)),
+              const SizedBox(width: 6),
+              Text(
+                "Father's / Guardian's Mobile Number",
+                style: GoogleFonts.lora(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Used to route exam distraction notifications and SMS alerts to your father's phone.",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: fatherPhoneController,
+            onChanged: (_) => onChanged(),
+            keyboardType: TextInputType.phone,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: 'e.g. +91 9876543210 or 9876543210',
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.phone_rounded, color: Color(0xFF0284C7), size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 3. Father's / Guardian's Email ID
+          Row(
+            children: [
+              const Icon(Icons.email_outlined, size: 18, color: Color(0xFF7C3AED)),
+              const SizedBox(width: 6),
+              Text(
+                "Father's / Guardian's Email ID",
+                style: GoogleFonts.lora(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Identifies your father's account so he can remotely monitor study progress.",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: fatherEmailController,
+            onChanged: (_) => onChanged(),
+            keyboardType: TextInputType.emailAddress,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: 'e.g. father.name@gmail.com',
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C3AED).withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.mail_rounded, color: Color(0xFF7C3AED), size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Guardian Connection Info Badge
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.verified_user_rounded, size: 18, color: Color(0xFF059669)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Automatic Father & Guardian Link',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF065F46),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Your father can install this app on his phone and pair using this phone number/email to receive live study status and exam distraction alerts.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: const Color(0xFF047857),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -810,6 +975,8 @@ class _ReviewPage extends StatelessWidget {
   final String? branch;
   final String course;
   final List<String> subjects;
+  final String fatherPhone;
+  final String fatherEmail;
 
   const _ReviewPage({
     required this.name,
@@ -817,6 +984,8 @@ class _ReviewPage extends StatelessWidget {
     required this.branch,
     required this.course,
     required this.subjects,
+    this.fatherPhone = '',
+    this.fatherEmail = '',
   });
 
   @override
@@ -869,6 +1038,20 @@ class _ReviewPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           _ReviewItem(icon: Icons.person_rounded, label: 'Student', value: name, color: AppColors.primary),
+          if (fatherPhone.isNotEmpty)
+            _ReviewItem(
+              icon: Icons.phone_iphone_rounded,
+              label: "Father's Phone",
+              value: fatherPhone,
+              color: const Color(0xFF0284C7),
+            ),
+          if (fatherEmail.isNotEmpty)
+            _ReviewItem(
+              icon: Icons.email_outlined,
+              label: "Father's Email",
+              value: fatherEmail,
+              color: const Color(0xFF7C3AED),
+            ),
           _ReviewItem(
             icon: Icons.school_rounded,
             label: 'Stage',

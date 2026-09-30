@@ -5,6 +5,7 @@ import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/data/services/supabase_service.dart';
 import 'package:smart_study_planner/ui/features/auth/supabase_sync_sheet.dart';
+import 'package:smart_study_planner/ui/features/parental/parent_dashboard_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -80,6 +81,53 @@ class SettingsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 18),
+                    // Parental Controls section (SHOWCASE ONLY TO PARENT, NOT TO CHILD)
+                    if (vm.isParentDevice) ...[
+                      const SizedBox(height: 18),
+                      _SettingsSection(
+                        title: 'Parental Controls & App Blocker',
+                        children: [
+                          _SettingsTile(
+                            icon: Icons.shield_rounded,
+                            title: 'Parent App Controller',
+                            subtitle: vm.parentalConfig.isEnabled
+                                ? 'Active • Auto-locks apps on exam eve'
+                                : 'Disabled • Tap to configure rules & PIN',
+                            iconColor: const Color(0xFFD97706),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: vm.parentalConfig.isEnabled
+                                    ? const Color(0xFFD1FAE5)
+                                    : const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    vm.parentalConfig.isEnabled ? 'Enforced' : 'Configure',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: vm.parentalConfig.isEnabled
+                                          ? const Color(0xFF065F46)
+                                          : const Color(0xFF92400E),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textSecondary),
+                                ],
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              ParentDashboardScreen.open(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                     // Study tips section
                     _SettingsSection(
                       title: 'Mindful Learning Principles',
@@ -183,6 +231,35 @@ class SettingsScreen extends StatelessWidget {
                         style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
                       ),
                     ),
+                    if (!vm.isParentDevice) ...[
+                      const SizedBox(height: 10),
+                      Center(
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            ParentDashboardScreen.open(context);
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.shield_outlined, size: 13, color: AppColors.textSecondary.withAlpha(90)),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Guardian Access',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary.withAlpha(120),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                   ],
                 ),

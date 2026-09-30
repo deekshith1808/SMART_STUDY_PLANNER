@@ -12,9 +12,55 @@ import 'package:smart_study_planner/ui/features/settings/settings_screen.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 import 'package:smart_study_planner/ui/features/auth/supabase_sync_sheet.dart';
+import 'package:smart_study_planner/ui/features/parental/parent_dashboard_screen.dart';
+import 'package:smart_study_planner/ui/features/parental/exam_lockdown_overlay.dart';
+import 'package:smart_study_planner/ui/features/parental/parent_nudge_dialog.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final vm = context.read<StudyPlannerViewModel>();
+        ParentNudgeDialog.showIfAvailable(context, vm);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!mounted) return;
+    final vm = context.read<StudyPlannerViewModel>();
+    if (state == AppLifecycleState.paused) {
+      if (vm.isExamLockdownActive || vm.isCurrentlyStudying) {
+        final reason = vm.isExamLockdownActive
+            ? 'Child minimized study app during Exam Lockdown'
+            : 'Left study app during active focus session';
+        vm.recordDistractionBreach(
+          reason: reason,
+          subject: vm.liveCurrentSubject ?? 'Active Study',
+        );
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      ParentNudgeDialog.showIfAvailable(context, vm);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +79,16 @@ class HomeScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: IndexedStack(
-            index: vm.selectedTabIndex,
-            children: pages,
+          body: Column(
+            children: [
+              const ExamLockdownBanner(),
+              Expanded(
+                child: IndexedStack(
+                  index: vm.selectedTabIndex,
+                  children: pages,
+                ),
+              ),
+            ],
           ),
           bottomNavigationBar: _BottomNav(
             currentIndex: vm.selectedTabIndex,
@@ -347,6 +400,20 @@ class _DashboardTab extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
+                              if (vm.isParentDevice) ...[
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(35),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: IconButton(
+                                    tooltip: 'Parent App Controller',
+                                    icon: const Icon(Icons.shield_rounded, color: Colors.white, size: 20),
+                                    onPressed: () => ParentDashboardScreen.open(context),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white.withAlpha(35),

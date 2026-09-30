@@ -4,6 +4,9 @@ class UserProfile {
   final String? branch; // for college: Engineering, Arts, Science, etc.
   final String? course; // specific course
   final List<Subject> subjects;
+  final String? fatherEmail;
+  final String? fatherPhone;
+  final String? fatherName;
 
   const UserProfile({
     required this.name,
@@ -11,6 +14,9 @@ class UserProfile {
     this.branch,
     this.course,
     required this.subjects,
+    this.fatherEmail,
+    this.fatherPhone,
+    this.fatherName,
   });
 
   UserProfile copyWith({
@@ -19,6 +25,9 @@ class UserProfile {
     String? branch,
     String? course,
     List<Subject>? subjects,
+    String? fatherEmail,
+    String? fatherPhone,
+    String? fatherName,
   }) {
     return UserProfile(
       name: name ?? this.name,
@@ -26,6 +35,9 @@ class UserProfile {
       branch: branch ?? this.branch,
       course: course ?? this.course,
       subjects: subjects ?? this.subjects,
+      fatherEmail: fatherEmail ?? this.fatherEmail,
+      fatherPhone: fatherPhone ?? this.fatherPhone,
+      fatherName: fatherName ?? this.fatherName,
     );
   }
 
@@ -35,6 +47,9 @@ class UserProfile {
         'branch': branch,
         'course': course,
         'subjects': subjects.map((s) => s.toJson()).toList(),
+        if (fatherEmail != null) 'fatherEmail': fatherEmail,
+        if (fatherPhone != null) 'fatherPhone': fatherPhone,
+        if (fatherName != null) 'fatherName': fatherName,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -45,6 +60,9 @@ class UserProfile {
         subjects: (json['subjects'] as List<dynamic>? ?? [])
             .map((s) => Subject.fromJson(s as Map<String, dynamic>))
             .toList(),
+        fatherEmail: (json['fatherEmail'] ?? json['parentEmail']) as String?,
+        fatherPhone: (json['fatherPhone'] ?? json['parentPhone'] ?? json['parentContact']) as String?,
+        fatherName: (json['fatherName'] ?? json['parentName']) as String?,
       );
 }
 

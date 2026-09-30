@@ -11,9 +11,13 @@ import 'package:smart_study_planner/ui/features/onboarding/onboarding_screen.dar
 import 'package:smart_study_planner/ui/features/home/home_screen.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 
+import 'package:smart_study_planner/ui/features/parental/parent_dashboard_screen.dart';
+import 'package:smart_study_planner/data/services/parental_notification_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseService.initialize();
+  await ParentalNotificationService.instance.initialize();
   runApp(const StudySmartApp());
 }
 
@@ -23,21 +27,46 @@ final _router = GoRouter(
     GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
     GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    GoRoute(path: '/parent', builder: (context, state) => const ParentDashboardScreen()),
   ],
 );
 
-class StudySmartApp extends StatelessWidget {
+class StudySmartApp extends StatefulWidget {
   const StudySmartApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final storageService = StorageService();
-    final repository = StudyRepository(storageService: storageService);
+  State<StudySmartApp> createState() => _StudySmartAppState();
+}
 
+class _StudySmartAppState extends State<StudySmartApp> {
+  late final StorageService _storageService;
+  late final StudyRepository _repository;
+  late final StudyPlannerViewModel _studyPlannerViewModel;
+  late final PomodoroViewModel _pomodoroViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _storageService = StorageService();
+    _repository = StudyRepository(storageService: _storageService);
+    _studyPlannerViewModel = StudyPlannerViewModel(repository: _repository);
+    _pomodoroViewModel = PomodoroViewModel(repository: _repository);
+    _pomodoroViewModel.onStudyStateChanged = _studyPlannerViewModel.updateLiveStudyState;
+  }
+
+  @override
+  void dispose() {
+    _studyPlannerViewModel.dispose();
+    _pomodoroViewModel.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => StudyPlannerViewModel(repository: repository)),
-        ChangeNotifierProvider(create: (_) => PomodoroViewModel(repository: repository)),
+        ChangeNotifierProvider.value(value: _studyPlannerViewModel),
+        ChangeNotifierProvider.value(value: _pomodoroViewModel),
       ],
       child: Consumer<StudyPlannerViewModel>(
         builder: (context, vm, _) {

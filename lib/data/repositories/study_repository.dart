@@ -2,6 +2,7 @@ import 'package:smart_study_planner/data/services/storage_service.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 import 'package:smart_study_planner/domain/models/learning_journey.dart';
+import 'package:smart_study_planner/domain/models/parental_control.dart';
 
 class StudyRepository {
   StudyRepository({required StorageService storageService})
@@ -117,6 +118,13 @@ class StudyRepository {
     await _storage.saveJourneyProgress(updated);
     return updated;
   }
+
+  // Parental Control
+  Future<ParentalControlConfig> getParentalConfig() => _storage.loadParentalConfig();
+  Future<void> saveParentalConfig(ParentalControlConfig config) => _storage.saveParentalConfig(config);
+  Future<List<DistractionBreachLog>> getBreachLogs() => _storage.loadBreachLogs();
+  Future<void> logDistractionBreach(DistractionBreachLog log) => _storage.addBreachLog(log);
+  Future<void> clearBreachLogs() => _storage.clearBreachLogs();
 
   Future<void> clearAll() => _storage.clearAll();
 }

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/study_session.dart';
 import '../../domain/models/learning_journey.dart';
+import '../../domain/models/parental_control.dart';
 
 class StorageService {
   static const _profileKey = 'user_profile';
@@ -11,6 +12,8 @@ class StorageService {
   static const _notesKey = 'quick_notes';
   static const _pomodoroSettingsKey = 'pomodoro_settings';
   static const _journeyKey = 'learning_journey_progress';
+  static const _parentalControlKey = 'parental_control_config';
+  static const _breachLogsKey = 'parental_breach_logs';
 
   // User Profile
   Future<UserProfile?> loadProfile() async {
@@ -99,6 +102,49 @@ class StorageService {
   Future<void> saveJourneyProgress(JourneyProgress progress) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_journeyKey, jsonEncode(progress.toJson()));
+  }
+
+  // Parental Control Config
+  Future<ParentalControlConfig> loadParentalConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_parentalControlKey);
+    if (jsonStr == null) return const ParentalControlConfig();
+    try {
+      return ParentalControlConfig.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+    } catch (_) {
+      return const ParentalControlConfig();
+    }
+  }
+
+  Future<void> saveParentalConfig(ParentalControlConfig config) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_parentalControlKey, jsonEncode(config.toJson()));
+  }
+
+  // Distraction Breach Logs
+  Future<List<DistractionBreachLog>> loadBreachLogs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_breachLogsKey);
+    if (jsonStr == null) return [];
+    try {
+      final list = jsonDecode(jsonStr) as List<dynamic>;
+      return list.map((e) => DistractionBreachLog.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> addBreachLog(DistractionBreachLog log) async {
+    final logs = await loadBreachLogs();
+    logs.insert(0, log);
+    if (logs.length > 50) logs.removeLast();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_breachLogsKey, jsonEncode(logs.map((e) => e.toJson()).toList()));
+  }
+
+  Future<void> clearBreachLogs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_breachLogsKey);
   }
 
   Future<void> clearAll() async {

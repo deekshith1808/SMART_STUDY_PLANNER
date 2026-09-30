@@ -11,6 +11,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Spark'), findsOneWidget);
-    expect(find.text('Start Learning 📖'), findsOneWidget);
+    expect(find.text('I am a Student — Start Learning 📖'), findsOneWidget);
+    expect(find.text('Father Login 🛡️'), findsOneWidget);
   });
 }
