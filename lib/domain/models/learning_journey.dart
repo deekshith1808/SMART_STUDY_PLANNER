@@ -1,3 +1,5 @@
+import 'user_profile.dart';
+
 enum NodeType { lesson, practice, quiz, chest, hurdle }
 
 enum NodeStatus { completed, active, locked }
@@ -13,6 +15,7 @@ class JourneyNode {
   final int stars; // 0 to 3
   final int stage;
   final double horizontalOffset; // -0.6 to 0.6 for zigzag path
+  final String? icon;
 
   const JourneyNode({
     required this.id,
@@ -25,6 +28,7 @@ class JourneyNode {
     this.stars = 0,
     required this.stage,
     required this.horizontalOffset,
+    this.icon,
   });
 
   JourneyNode copyWith({
@@ -37,6 +41,7 @@ class JourneyNode {
     int? stars,
     int? stage,
     double? horizontalOffset,
+    String? icon,
   }) {
     return JourneyNode(
       id: id,
@@ -49,7 +54,62 @@ class JourneyNode {
       stars: stars ?? this.stars,
       stage: stage ?? this.stage,
       horizontalOffset: horizontalOffset ?? this.horizontalOffset,
+      icon: icon ?? this.icon,
     );
+  }
+
+  /// Distinct thematic icon for every level
+  String get displayIcon {
+    if (icon != null && icon!.isNotEmpty) return icon!;
+
+    if (type == NodeType.chest) return '🎁';
+    if (type == NodeType.hurdle) return '🏰';
+    if (type == NodeType.quiz) return '⚡';
+
+    final text = '$title $subjectName'.toLowerCase();
+    // Physics
+    if (text.contains('quantum') || text.contains('atom')) return '⚛️';
+    if (text.contains('wave') || text.contains('optic')) return '🔬';
+    if (text.contains('thermo') || text.contains('heat') || text.contains('energy')) return '🔥';
+    if (text.contains('magnet') || text.contains('electric') || text.contains('circuit')) return '⚡';
+    if (text.contains('mechanic') || text.contains('motion') || text.contains('force')) return '🚀';
+    if (text.contains('physic')) return '🔭';
+
+    // Mathematics
+    if (text.contains('calculus') || text.contains('integral') || text.contains('deriv')) return '♾️';
+    if (text.contains('algebra') || text.contains('matrix') || text.contains('linear')) return '🔢';
+    if (text.contains('geometr') || text.contains('trig')) return '📐';
+    if (text.contains('statist') || text.contains('probab')) return '📊';
+    if (text.contains('math')) return '🧮';
+
+    // Chemistry
+    if (text.contains('organic') || text.contains('carbon')) return '⚗️';
+    if (text.contains('reaction') || text.contains('bond') || text.contains('molecul')) return '🧪';
+    if (text.contains('solution') || text.contains('acid') || text.contains('base')) return '💧';
+    if (text.contains('chem')) return '🧪';
+
+    // Computer Science
+    if (text.contains('algorithm') || text.contains('logic')) return '🧠';
+    if (text.contains('data') || text.contains('struct')) return '🗄️';
+    if (text.contains('ai') || text.contains('robot') || text.contains('learn')) return '🤖';
+    if (text.contains('network') || text.contains('web') || text.contains('cloud')) return '🌐';
+    if (text.contains('code') || text.contains('program') || text.contains('comput')) return '💻';
+
+    // Biology
+    if (text.contains('genet') || text.contains('dna') || text.contains('rna')) return '🧬';
+    if (text.contains('plant') || text.contains('botan') || text.contains('photo')) return '🌿';
+    if (text.contains('cell') || text.contains('microb') || text.contains('virus')) return '🦠';
+    if (text.contains('bio')) return '🦉';
+
+    // Humanities & Languages
+    if (text.contains('history') || text.contains('civic')) return '📜';
+    if (text.contains('geograph') || text.contains('earth')) return '🌍';
+    if (text.contains('litera') || text.contains('read') || text.contains('grammar') || text.contains('eng')) return '📖';
+    if (text.contains('law') || text.contains('justic')) return '⚖️';
+    if (text.contains('business') || text.contains('econ') || text.contains('financ')) return '📈';
+
+    if (type == NodeType.practice) return '✍️';
+    return '📘';
   }
 
   Map<String, dynamic> toJson() => {
@@ -63,6 +123,7 @@ class JourneyNode {
         'stars': stars,
         'stage': stage,
         'horizontalOffset': horizontalOffset,
+        'icon': icon,
       };
 
   factory JourneyNode.fromJson(Map<String, dynamic> json) => JourneyNode(
@@ -82,6 +143,7 @@ class JourneyNode {
         stars: json['stars'] as int? ?? 0,
         stage: json['stage'] as int? ?? 1,
         horizontalOffset: (json['horizontalOffset'] as num?)?.toDouble() ?? 0.0,
+        icon: json['icon'] as String?,
       );
 }
 
@@ -108,7 +170,28 @@ class ExamHurdle {
 
   bool get isUnlocked => completedNodes >= requiredNodes;
   double get readiness => (completedNodes / (requiredNodes == 0 ? 1 : requiredNodes)).clamp(0.0, 1.0);
-  int get daysRemaining => examDate.difference(DateTime.now()).inDays.clamp(0, 365);
+  int get daysRemaining {
+    final now = DateTime.now();
+    final target = DateTime(examDate.year, examDate.month, examDate.day);
+    final current = DateTime(now.year, now.month, now.day);
+    return target.difference(current).inDays.clamp(0, 365);
+  }
+
+  String get formattedExamDate {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[examDate.month - 1]} ${examDate.day}, ${examDate.year}';
+  }
+
+  String get daysRemainingText {
+    final now = DateTime.now();
+    final target = DateTime(examDate.year, examDate.month, examDate.day);
+    final current = DateTime(now.year, now.month, now.day);
+    final diff = target.difference(current).inDays;
+    if (diff < 0) return 'Concluded';
+    if (diff == 0) return 'Today!';
+    if (diff == 1) return 'Tomorrow';
+    return '$diff Days Left';
+  }
 
   ExamHurdle copyWith({
     String? title,
@@ -161,25 +244,99 @@ class JourneyProgress {
   final DateTime? lastStudyDate;
   final bool hasStreakShield;
   final List<JourneyNode> nodes;
-  final ExamHurdle hurdle;
+  final List<ExamHurdle> hurdles;
+  final double totalHours;
 
-  const JourneyProgress({
+  JourneyProgress({
     required this.totalXp,
     required this.currentStreak,
     this.lastStudyDate,
     this.hasStreakShield = true,
     required this.nodes,
-    required this.hurdle,
-  });
+    List<ExamHurdle>? hurdles,
+    ExamHurdle? hurdle,
+    this.totalHours = 0.0,
+  }) : hurdles = hurdles ?? (hurdle != null ? [hurdle] : const []);
 
-  int get level => (totalXp ~/ 120) + 1;
+  ExamHurdle get hurdle =>
+      activeHurdle ?? (hurdles.isNotEmpty ? hurdles.first : _defaultHurdle());
+
+  ExamHurdle? get activeHurdle {
+    if (hurdles.isEmpty) return null;
+    final upcoming = hurdles.where((h) => h.daysRemaining >= 0).toList()
+      ..sort((a, b) => a.examDate.compareTo(b.examDate));
+    if (upcoming.isNotEmpty) return upcoming.first;
+    return hurdles.first;
+  }
+
+  List<ExamHurdle> get sortedHurdles {
+    final list = List<ExamHurdle>.from(hurdles);
+    list.sort((a, b) => a.examDate.compareTo(b.examDate));
+    return list;
+  }
+
+  static ExamHurdle _defaultHurdle() => ExamHurdle(
+        id: 'hurdle_default',
+        title: 'Semester Final Exam',
+        subjectName: 'Core Subjects',
+        examDate: DateTime.now().add(const Duration(days: 7)),
+        targetScore: 90.0,
+        requiredNodes: 5,
+        completedNodes: 0,
+      );
+
+  int get succeededLevelsCount =>
+      nodes.where((n) => n.status == NodeStatus.completed).length;
+
+  /// Dynamic Level: derived from succeeded levels + focus study hours + XP earned
+  int get level =>
+      ((totalXp ~/ 80) + succeededLevelsCount + (totalHours.toInt() ~/ 2))
+          .clamp(1, 99);
 
   String get levelTitle {
     if (level <= 1) return 'Novice Scholar';
     if (level <= 2) return 'Focus Apprentice';
     if (level <= 3) return 'Mastery Seeker';
     if (level <= 4) return 'Syllabus Crusher';
-    return 'Exam Champion';
+    if (level <= 5) return 'Exam Grandmaster';
+    return 'Scholar of Eminence';
+  }
+
+  /// Calculates real consecutive active days based on actual session dates
+  static int calculateStreakFromSessions({
+    required List<DateTime> studyDates,
+    DateTime? lastStudyDate,
+  }) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    final normalizedDates = studyDates
+        .map((d) => DateTime(d.year, d.month, d.day))
+        .toSet();
+
+    if (lastStudyDate != null) {
+      normalizedDates.add(DateTime(lastStudyDate.year, lastStudyDate.month, lastStudyDate.day));
+    }
+
+    if (normalizedDates.isEmpty) return 0;
+
+    DateTime checkDate;
+    if (normalizedDates.contains(today)) {
+      checkDate = today;
+    } else if (normalizedDates.contains(yesterday)) {
+      checkDate = yesterday;
+    } else {
+      return 0;
+    }
+
+    int streak = 0;
+    while (normalizedDates.contains(checkDate)) {
+      streak++;
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    return streak;
   }
 
   int get xpForNextLevel => (level * 120) - totalXp;
@@ -191,7 +348,9 @@ class JourneyProgress {
     DateTime? lastStudyDate,
     bool? hasStreakShield,
     List<JourneyNode>? nodes,
+    List<ExamHurdle>? hurdles,
     ExamHurdle? hurdle,
+    double? totalHours,
   }) {
     return JourneyProgress(
       totalXp: totalXp ?? this.totalXp,
@@ -199,7 +358,8 @@ class JourneyProgress {
       lastStudyDate: lastStudyDate ?? this.lastStudyDate,
       hasStreakShield: hasStreakShield ?? this.hasStreakShield,
       nodes: nodes ?? this.nodes,
-      hurdle: hurdle ?? this.hurdle,
+      hurdles: hurdles ?? (hurdle != null ? [hurdle] : this.hurdles),
+      totalHours: totalHours ?? this.totalHours,
     );
   }
 
@@ -209,31 +369,38 @@ class JourneyProgress {
         'lastStudyDate': lastStudyDate?.toIso8601String(),
         'hasStreakShield': hasStreakShield,
         'nodes': nodes.map((n) => n.toJson()).toList(),
+        'hurdles': hurdles.map((h) => h.toJson()).toList(),
         'hurdle': hurdle.toJson(),
+        'totalHours': totalHours,
       };
 
-  factory JourneyProgress.fromJson(Map<String, dynamic> json) => JourneyProgress(
-        totalXp: json['totalXp'] as int? ?? 280,
-        currentStreak: json['currentStreak'] as int? ?? 5,
-        lastStudyDate: json['lastStudyDate'] != null
-            ? DateTime.tryParse(json['lastStudyDate'] as String)
-            : null,
-        hasStreakShield: json['hasStreakShield'] as bool? ?? true,
-        nodes: (json['nodes'] as List<dynamic>? ?? [])
-            .map((e) => JourneyNode.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        hurdle: json['hurdle'] != null
-            ? ExamHurdle.fromJson(json['hurdle'] as Map<String, dynamic>)
-            : ExamHurdle(
-                id: 'hurdle_1',
-                title: 'Midterm Semester Exam',
-                subjectName: 'Core Sciences & Math',
-                examDate: DateTime.now().add(const Duration(days: 6)),
-                targetScore: 95.0,
-                requiredNodes: 5,
-                completedNodes: 2,
-              ),
-      );
+  factory JourneyProgress.fromJson(Map<String, dynamic> json) {
+    final hurdlesList = (json['hurdles'] as List<dynamic>? ?? [])
+        .map((e) => ExamHurdle.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    if (hurdlesList.isEmpty && json['hurdle'] != null) {
+      hurdlesList.add(ExamHurdle.fromJson(json['hurdle'] as Map<String, dynamic>));
+    }
+
+    if (hurdlesList.isEmpty) {
+      hurdlesList.add(_defaultHurdle());
+    }
+
+    return JourneyProgress(
+      totalXp: json['totalXp'] as int? ?? 120,
+      currentStreak: json['currentStreak'] as int? ?? 1,
+      lastStudyDate: json['lastStudyDate'] != null
+          ? DateTime.tryParse(json['lastStudyDate'] as String)
+          : null,
+      hasStreakShield: json['hasStreakShield'] as bool? ?? true,
+      nodes: (json['nodes'] as List<dynamic>? ?? [])
+          .map((e) => JourneyNode.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      hurdles: hurdlesList,
+      totalHours: (json['totalHours'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 
   static JourneyProgress defaultProgress() {
     final now = DateTime.now();
@@ -328,6 +495,160 @@ class JourneyProgress {
         requiredNodes: 5,
         completedNodes: 2,
       ),
+    );
+  }
+
+  static JourneyProgress fromSubjects(
+    List<Subject> subjects, {
+    DateTime? customExamDate,
+    String? customTitle,
+    List<JourneyNode>? existingCompletedNodes,
+    int? existingXp,
+    int? existingStreak,
+    List<ExamHurdle>? existingHurdles,
+  }) {
+    final nodes = <JourneyNode>[];
+    const offsets = [0.0, -0.45, 0.35, -0.4, 0.0, 0.45];
+    int stage = 1;
+
+    final completedTitles = existingCompletedNodes
+            ?.where((n) => n.status == NodeStatus.completed)
+            .map((n) => n.title.toLowerCase().trim())
+            .toSet() ??
+        {};
+
+    for (int sIdx = 0; sIdx < subjects.length; sIdx++) {
+      final subject = subjects[sIdx];
+      for (int tIdx = 0; tIdx < subject.topics.length; tIdx++) {
+        final topic = subject.topics[tIdx];
+        final nodeIndex = nodes.length;
+        final offset = offsets[nodeIndex % offsets.length];
+        final type = (tIdx % 3 == 0)
+            ? NodeType.lesson
+            : (tIdx % 3 == 1 ? NodeType.practice : NodeType.quiz);
+
+        final isAlreadyDone =
+            completedTitles.contains(topic.toLowerCase().trim());
+
+        nodes.add(JourneyNode(
+          id: 'node_${subject.id}_$tIdx',
+          title: topic,
+          description:
+              'Master $topic concepts, applications, and practice drills for ${subject.name}.',
+          subjectName: subject.name,
+          type: type,
+          status: isAlreadyDone
+              ? NodeStatus.completed
+              : (nodeIndex == 0 ? NodeStatus.active : NodeStatus.locked),
+          xpReward: 35 + ((nodeIndex % 4) * 10),
+          stars: isAlreadyDone ? 3 : 0,
+          stage: stage,
+          horizontalOffset: offset,
+        ));
+
+        if (nodes.length % 3 == 0) stage++;
+      }
+    }
+
+    if (nodes.isEmpty) {
+      if (subjects.isNotEmpty) {
+        for (int i = 0; i < subjects.length; i++) {
+          final s = subjects[i];
+          nodes.add(JourneyNode(
+            id: 'node_${s.id}_core',
+            title: '${s.name} Core Foundations',
+            description:
+                'Essential theorems, definitions and formulas for ${s.name}.',
+            subjectName: s.name,
+            type: NodeType.lesson,
+            status: i == 0 ? NodeStatus.active : NodeStatus.locked,
+            xpReward: 40,
+            stars: 0,
+            stage: (i ~/ 3) + 1,
+            horizontalOffset: offsets[i % offsets.length],
+          ));
+        }
+      } else {
+        return JourneyProgress.defaultProgress();
+      }
+    }
+
+    final hasActive = nodes.any((n) => n.status == NodeStatus.active);
+    final allCompleted = nodes.every((n) => n.status == NodeStatus.completed);
+    if (!hasActive && !allCompleted) {
+      final firstLockedIndex =
+          nodes.indexWhere((n) => n.status == NodeStatus.locked);
+      if (firstLockedIndex != -1) {
+        nodes[firstLockedIndex] =
+            nodes[firstLockedIndex].copyWith(status: NodeStatus.active);
+      }
+    }
+
+    // Build multiple hurdles for subjects with exam dates or custom hurdle
+    final hurdleList = <ExamHurdle>[];
+    if (existingHurdles != null && existingHurdles.isNotEmpty) {
+      hurdleList.addAll(existingHurdles);
+    } else {
+      for (final s in subjects) {
+        if (s.examDate != null) {
+          final subjectNodes = nodes
+              .where((n) => n.subjectName.toLowerCase() == s.name.toLowerCase())
+              .toList();
+          final reqNodes = subjectNodes.isNotEmpty ? subjectNodes.length : 3;
+          final doneNodes = subjectNodes
+              .where((n) => n.status == NodeStatus.completed)
+              .length;
+
+          hurdleList.add(ExamHurdle(
+            id: 'hurdle_${s.id}',
+            title: '${s.name} Exam Hurdle',
+            subjectName: s.name,
+            examDate: s.examDate!,
+            targetScore: s.targetMarks,
+            requiredNodes: reqNodes,
+            completedNodes: doneNodes,
+            isPassed: doneNodes >= reqNodes,
+          ));
+        }
+      }
+
+      if (hurdleList.isEmpty) {
+        DateTime examDate = customExamDate ??
+            DateTime.now().add(const Duration(days: 14));
+        final completedCount =
+            nodes.where((n) => n.status == NodeStatus.completed).length;
+
+        hurdleList.add(ExamHurdle(
+          id: 'hurdle_${DateTime.now().millisecondsSinceEpoch}',
+          title: customTitle ??
+              (subjects.isNotEmpty
+                  ? '${subjects.first.name} Final Exam'
+                  : 'Semester Final Exam'),
+          subjectName:
+              subjects.isNotEmpty ? subjects.first.name : 'Core Subjects',
+          examDate: examDate,
+          targetScore: subjects.isNotEmpty ? subjects.first.targetMarks : 90.0,
+          requiredNodes: nodes.length,
+          completedNodes: completedCount,
+          isPassed: completedCount >= nodes.length,
+        ));
+      }
+    }
+
+    hurdleList.sort((a, b) => a.examDate.compareTo(b.examDate));
+
+    final completedCount =
+        nodes.where((n) => n.status == NodeStatus.completed).length;
+    final totalXp = existingXp ?? ((completedCount * 35) + 120);
+    final streak = existingStreak ?? 3;
+
+    return JourneyProgress(
+      totalXp: totalXp,
+      currentStreak: streak,
+      lastStudyDate: DateTime.now(),
+      hasStreakShield: true,
+      nodes: nodes,
+      hurdles: hurdleList,
     );
   }
 }

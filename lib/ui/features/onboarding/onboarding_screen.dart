@@ -47,6 +47,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   int get _totalPages => _educationType == 'college' ? 5 : 4;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final vm = context.read<StudyPlannerViewModel>();
+      if (vm.profile?.name.isNotEmpty == true && _nameController.text.isEmpty) {
+        setState(() {
+          _nameController.text = vm.profile!.name;
+        });
+      }
+    });
+  }
+
   void _nextPage() {
     if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
@@ -98,7 +112,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         studyHours: 0,
         color: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
         topics: [],
-        priority: 3,
+        priority: SubjectPriority.medium,
+        difficulty: SubjectDifficulty.medium,
       );
     }).toList();
 
@@ -117,6 +132,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
 
     await viewModel.saveProfile(profile);
+    await viewModel.generateJourneyFromSubjects();
     if (mounted) context.go('/home');
   }
 
@@ -833,6 +849,26 @@ class _SubjectsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final schoolPresets = [
+      'Mathematics',
+      'Physics',
+      'Chemistry',
+      'Biology',
+      'English',
+      'Computer Science',
+      'Social Studies',
+    ];
+    final collegePresets = [
+      'Data Structures & Algorithms',
+      'Operating Systems',
+      'Database Systems (DBMS)',
+      'Computer Networks',
+      'Engineering Mathematics',
+      'Software Engineering',
+      'Web Development',
+    ];
+    final presets = educationType == 'school' ? schoolPresets : collegePresets;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -850,13 +886,72 @@ class _SubjectsPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add the subjects you study this semester to track marks and study hours.',
+            'Add the subjects you study this semester to track marks, hurdles, and study hours.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),
+          const SizedBox(height: 16),
+
+          // Preset Chips Section
+          Text(
+            'Recommended for ${educationType == 'school' ? 'School' : 'College'} (Tap to add):',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: presets.map((preset) {
+              final isEnrolled = subjects
+                  .any((s) => s.toLowerCase() == preset.toLowerCase());
+              return FilterChip(
+                label: Text(preset),
+                selected: isEnrolled,
+                onSelected: (selected) {
+                  if (selected) {
+                    onAdd(preset);
+                  } else {
+                    final idx = subjects.indexWhere(
+                        (s) => s.toLowerCase() == preset.toLowerCase());
+                    if (idx != -1) onRemove(idx);
+                  }
+                },
+                selectedColor: AppColors.primary.withAlpha(35),
+                checkmarkColor: AppColors.primary,
+                labelStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: isEnrolled ? FontWeight.w700 : FontWeight.w500,
+                  color: isEnrolled ? AppColors.primary : AppColors.textPrimary,
+                ),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: isEnrolled ? AppColors.primary : AppColors.borderLight,
+                    width: isEnrolled ? 1.5 : 1.0,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
           const SizedBox(height: 20),
+
+          // Custom Subject TextField
+          Text(
+            'Or add your own custom subject:',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -865,7 +960,7 @@ class _SubjectsPage extends StatelessWidget {
                   textCapitalization: TextCapitalization.words,
                   style: GoogleFonts.plusJakartaSans(fontSize: 15, color: AppColors.textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'e.g. Calculus, Physics, Literature',
+                    hintText: 'e.g. Calculus, Literature, Robotics',
                     prefixIcon: Container(
                       margin: const EdgeInsets.all(10),
                       padding: const EdgeInsets.all(6),

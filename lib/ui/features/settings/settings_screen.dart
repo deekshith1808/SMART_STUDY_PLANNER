@@ -6,12 +6,16 @@ import 'package:smart_study_planner/ui/features/home/study_planner_view_model.da
 import 'package:smart_study_planner/data/services/supabase_service.dart';
 import 'package:smart_study_planner/ui/features/auth/supabase_sync_sheet.dart';
 import 'package:smart_study_planner/ui/features/parental/parent_dashboard_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:smart_study_planner/ui/features/pomodoro/focus_shield_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: context.watch<StudyPlannerViewModel>(),
       builder: (context, _) {
@@ -21,48 +25,64 @@ class SettingsScreen extends StatelessWidget {
           expand: false,
           initialChildSize: 0.78,
           maxChildSize: 0.92,
-          builder: (_, ctrl) => Column(
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(top: 14, bottom: 8),
-                decoration: BoxDecoration(color: const Color(0xFFD6CBC0), borderRadius: BorderRadius.circular(2)),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: ctrl,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Student Preferences ⚙️',
-                          style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    // Profile section
-                    _SettingsSection(
-                      title: 'Student Identity',
+          builder: (_, ctrl) => Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 14, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFD6CBC0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: ctrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Student Preferences ⚙️',
+                            style: GoogleFonts.lora(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      // Profile section
+                      _SettingsSection(
+                        title: 'Student Identity',
                       children: [
                         _SettingsTile(
                           icon: Icons.person_outline_rounded,
                           title: 'Learner Name',
-                          subtitle: vm.profile?.name ?? 'Not set',
+                          subtitle: vm.profile?.name.isNotEmpty == true
+                              ? vm.profile!.name
+                              : 'Tap to set learner name',
                           iconColor: AppColors.primary,
-                          onTap: () {},
+                          trailing: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                          onTap: () => _showEditNameDialog(context, vm),
                         ),
                         const Divider(height: 1, indent: 64, color: AppColors.borderLight),
                         _SettingsTile(
                           icon: Icons.school_outlined,
                           title: 'Education Stage',
                           subtitle: vm.profile != null
-                              ? '${vm.profile!.educationType == 'college' ? 'College' : 'School'}${vm.profile!.branch != null ? ' · ${vm.profile!.branch}' : ''}'
-                              : 'Not set',
+                              ? '${vm.profile!.educationType == 'college' ? 'College' : 'School'}${vm.profile!.branch != null ? ' · ${vm.profile!.branch}' : ''}${vm.profile!.course != null ? ' (${vm.profile!.course})' : ''}'
+                              : 'Tap to configure education stage',
                           iconColor: AppColors.secondary,
-                          onTap: () {},
+                          trailing: const Icon(Icons.edit_outlined, size: 18, color: AppColors.secondary),
+                          onTap: () => _showEditEducationDialog(context, vm),
                         ),
                       ],
                     ),
@@ -73,17 +93,57 @@ class SettingsScreen extends StatelessWidget {
                       children: [
                         _SettingsToggle(
                           icon: Icons.dark_mode_outlined,
-                          title: 'Roasted Charcoal Dark Mode',
-                          subtitle: 'Cozy dark palette for evening study',
+                          title: 'Realistic OLED Dark Mode',
+                          subtitle: 'Midnight black with electric blue & purple accents',
                           value: vm.isDarkMode,
                           onChanged: (_) => vm.toggleDarkMode(),
                         ),
                       ],
                     ),
                     const SizedBox(height: 18),
+                    // Focus Shield & Social Media Blocker
+                    _SettingsSection(
+                      title: 'Focus Shield & Anti-Distraction',
+                      children: [
+                        Consumer<PomodoroViewModel>(
+                          builder: (context, pomodoroVm, _) {
+                            final config = pomodoroVm.shieldConfig;
+                            final enabledApps = config.blockedApps.where((a) => a.isEnabled).length;
+                            return _SettingsTile(
+                              icon: Icons.shield_rounded,
+                              title: 'Social Media Blocker',
+                              subtitle: config.isShieldEnabled
+                                  ? 'Active during focus • $enabledApps apps guarded • ${config.blockedAttemptsCount} shielded'
+                                  : 'Disabled • Tap to configure',
+                              iconColor: const Color(0xFFDC2626),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: config.isShieldEnabled ? const Color(0xFFFEF2F2) : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: config.isShieldEnabled ? const Color(0xFFFECACA) : const Color(0xFFCBD5E1),
+                                  ),
+                                ),
+                                child: Text(
+                                  config.isShieldEnabled ? 'Guarded 🛡️' : 'Off',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: config.isShieldEnabled ? const Color(0xFF991B1B) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                              onTap: () => FocusShieldSheet.show(context, pomodoroVm),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
                     // Parental Controls section (SHOWCASE ONLY TO PARENT, NOT TO CHILD)
                     if (vm.isParentDevice) ...[
-                      const SizedBox(height: 18),
                       _SettingsSection(
                         title: 'Parental Controls & App Blocker',
                         children: [
@@ -127,6 +187,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 18),
                     ],
                     // Study tips section
                     _SettingsSection(
@@ -169,7 +230,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 18),
                     // Cloud Sync section
                     _SettingsSection(
-                      title: 'Cloud Sync & Supabase',
+                      title: 'Cloud Sync & Account Isolation',
                       children: [
                         _SettingsTile(
                           icon: Icons.cloud_sync_rounded,
@@ -208,6 +269,22 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           onTap: () => SupabaseSyncSheet.show(context),
                         ),
+                        if (vm.isAuthenticated) ...[
+                          const Divider(height: 1, indent: 64, color: AppColors.borderLight),
+                          _SettingsTile(
+                            icon: Icons.logout_rounded,
+                            title: 'Sign Out Account',
+                            subtitle: 'Switch accounts cleanly without mixing data',
+                            iconColor: const Color(0xFFE11D48),
+                            onTap: () async {
+                              await vm.onSignOut();
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                context.go('/login');
+                              }
+                            },
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -266,8 +343,169 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
-        );
-      },
+        ),
+      );
+    },
+  );
+}
+
+  void _showEditNameDialog(BuildContext context, StudyPlannerViewModel vm) {
+    final controller = TextEditingController(text: vm.profile?.name ?? '');
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Edit Learner Name', style: GoogleFonts.lora(fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'Enter your name',
+            labelText: 'Learner Name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty && vm.profile != null) {
+                await vm.saveProfile(vm.profile!.copyWith(name: newName));
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditEducationDialog(BuildContext context, StudyPlannerViewModel vm) {
+    String currentType = vm.profile?.educationType ?? 'college';
+    String? currentBranch = vm.profile?.branch;
+    final courseController = TextEditingController(text: vm.profile?.course ?? '');
+    final branches = [
+      'Engineering & Tech',
+      'Medical & Health',
+      'Arts & Humanities',
+      'Natural Sciences',
+      'Commerce & Mgmt',
+      'Law & Governance',
+      'Other Studies',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Education Stage & Details',
+                      style: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w700)),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text('Education Stage:',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ChoiceChip(
+                      label: const Center(child: Text('School 🏫')),
+                      selected: currentType == 'school',
+                      onSelected: (val) {
+                        if (val) setModalState(() => currentType = 'school');
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ChoiceChip(
+                      label: const Center(child: Text('College 🎓')),
+                      selected: currentType == 'college',
+                      onSelected: (val) {
+                        if (val) setModalState(() => currentType = 'college');
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              if (currentType == 'college') ...[
+                const SizedBox(height: 16),
+                Text('Branch / Stream:',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: branches.map((b) {
+                    final sel = currentBranch == b;
+                    return ChoiceChip(
+                      label: Text(b, style: const TextStyle(fontSize: 12)),
+                      selected: sel,
+                      onSelected: (val) {
+                        if (val) setModalState(() => currentBranch = b);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: courseController,
+                  decoration: const InputDecoration(
+                    labelText: 'Course / Degree Name (Optional)',
+                    hintText: 'e.g. B.Tech Computer Science, B.Sc Physics',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (vm.profile != null) {
+                      await vm.saveProfile(vm.profile!.copyWith(
+                        educationType: currentType,
+                        branch: currentType == 'college' ? currentBranch : null,
+                        course: currentType == 'college' && courseController.text.trim().isNotEmpty
+                            ? courseController.text.trim()
+                            : null,
+                      ));
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: const Text('Save Education Details'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -314,6 +552,8 @@ class _SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -322,24 +562,31 @@ class _SettingsSection extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             letterSpacing: 1.1,
           ),
         ),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.borderLight, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(4),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          decoration: isDark
+              ? AppColors.glassCardDecoration(
+                  isDark: true,
+                  borderColor: const Color(0x338B5CF6),
+                  glowColor: const Color(0x188B5CF6),
+                  borderRadius: 18,
+                )
+              : BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.borderLight, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
           child: Column(children: children),
         ),
       ],
@@ -366,7 +613,9 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = iconColor ?? AppColors.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = iconColor ?? (isDark ? AppColors.darkPrimary : AppColors.primary);
+
     return ListTile(
       onTap: onTap,
       leading: Container(
@@ -380,13 +629,20 @@ class _SettingsTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        ),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+      trailing: trailing ?? Icon(Icons.chevron_right_rounded, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary, size: 20),
     );
   }
 }
@@ -408,27 +664,37 @@ class _SettingsToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDark ? AppColors.darkPrimary : AppColors.primary;
+
     return ListTile(
       leading: Container(
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: AppColors.primary.withAlpha(25),
+          color: color.withAlpha(25),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
+        child: Icon(icon, color: color, size: 20),
       ),
       title: Text(
         title,
-        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        ),
       ),
       trailing: Switch(
-        activeThumbColor: AppColors.primary,
-        activeTrackColor: AppColors.primary.withAlpha(50),
+        activeThumbColor: isDark ? const Color(0xFF38BDF8) : AppColors.primary,
+        activeTrackColor: isDark ? const Color(0x6038BDF8) : AppColors.primary.withAlpha(50),
         value: value,
         onChanged: onChanged,
       ),

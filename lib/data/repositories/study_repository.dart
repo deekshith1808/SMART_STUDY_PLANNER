@@ -3,6 +3,7 @@ import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 import 'package:smart_study_planner/domain/models/learning_journey.dart';
 import 'package:smart_study_planner/domain/models/parental_control.dart';
+import 'package:smart_study_planner/domain/models/focus_shield.dart';
 
 class StudyRepository {
   StudyRepository({required StorageService storageService})
@@ -10,12 +11,16 @@ class StudyRepository {
 
   final StorageService _storage;
 
+  void setUserId(String? userId) => _storage.setUserId(userId);
+  Future<void> clearUserCache([String? userId]) => _storage.clearUserCache(userId);
+
   // Profile
   Future<UserProfile?> getProfile() => _storage.loadProfile();
   Future<void> saveProfile(UserProfile profile) => _storage.saveProfile(profile);
 
   // Sessions
   Future<List<StudySession>> getSessions() => _storage.loadSessions();
+  Future<void> saveSessions(List<StudySession> sessions) => _storage.saveSessions(sessions);
   Future<void> addSession(StudySession session) async {
     final sessions = await _storage.loadSessions();
     sessions.add(session);
@@ -24,6 +29,7 @@ class StudyRepository {
 
   // Tasks
   Future<List<ScheduledTask>> getTasks() => _storage.loadTasks();
+  Future<void> saveTasks(List<ScheduledTask> tasks) => _storage.saveTasks(tasks);
   Future<void> addTask(ScheduledTask task) async {
     final tasks = await _storage.loadTasks();
     tasks.add(task);
@@ -125,6 +131,10 @@ class StudyRepository {
   Future<List<DistractionBreachLog>> getBreachLogs() => _storage.loadBreachLogs();
   Future<void> logDistractionBreach(DistractionBreachLog log) => _storage.addBreachLog(log);
   Future<void> clearBreachLogs() => _storage.clearBreachLogs();
+
+  // Focus Shield & Social Media Blocker
+  Future<FocusShieldConfig> getFocusShieldConfig() => _storage.loadFocusShieldConfig();
+  Future<void> saveFocusShieldConfig(FocusShieldConfig config) => _storage.saveFocusShieldConfig(config);
 
   Future<void> clearAll() => _storage.clearAll();
 }
