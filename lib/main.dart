@@ -7,6 +7,7 @@ import 'package:smart_study_planner/data/services/supabase_service.dart';
 import 'package:smart_study_planner/data/repositories/study_repository.dart';
 import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/welcome/welcome_screen.dart';
+import 'package:smart_study_planner/ui/features/auth/login_screen.dart';
 import 'package:smart_study_planner/ui/features/onboarding/onboarding_screen.dart';
 import 'package:smart_study_planner/ui/features/home/home_screen.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
@@ -21,6 +22,7 @@ final _router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
   ],

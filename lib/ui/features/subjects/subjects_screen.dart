@@ -261,6 +261,32 @@ class _SubjectCard extends StatelessWidget {
                     )).toList(),
                   ),
                 ],
+                if (subject.examDate != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFF59E0B).withAlpha(120)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.event_rounded, size: 14, color: Color(0xFFB45309)),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Exam: ${_formatSubjectDate(subject.examDate!)} • ${_subjectDaysLeft(subject.examDate!)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -330,6 +356,7 @@ class _SubjectFormState extends State<_SubjectForm> {
   late int _priority;
   late int _selectedColorIndex;
   late List<String> _topics;
+  DateTime? _examDate;
 
   @override
   void initState() {
@@ -342,6 +369,7 @@ class _SubjectFormState extends State<_SubjectForm> {
     _priority = widget.subject?.priority ?? 3;
     _topics = List<String>.from(widget.subject?.topics ?? []);
     _selectedColorIndex = widget.colorIndex % AppColors.subjectColors.length;
+    _examDate = widget.subject?.examDate;
   }
 
   @override
@@ -466,6 +494,74 @@ class _SubjectFormState extends State<_SubjectForm> {
                 )).toList(),
               ),
             ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Target Exam Date',
+                    style: GoogleFonts.lora(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
+                if (_examDate != null)
+                  TextButton(
+                    onPressed: () => setState(() => _examDate = null),
+                    child: const Text('Clear',
+                        style: TextStyle(fontSize: 12, color: AppColors.error)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate:
+                      _examDate ?? DateTime.now().add(const Duration(days: 30)),
+                  firstDate:
+                      DateTime.now().subtract(const Duration(days: 30)),
+                  lastDate: DateTime.now().add(const Duration(days: 730)),
+                );
+                if (picked != null) {
+                  setState(() => _examDate = picked);
+                }
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF7F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE8DFD3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.event_rounded,
+                        color: AppColors.primary, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _examDate != null
+                            ? '${_formatSubjectDate(_examDate!)} (${_subjectDaysLeft(_examDate!)})'
+                            : 'Set Subject Exam Date (Optional)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: _examDate != null
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _examDate != null
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -533,10 +629,26 @@ class _SubjectFormState extends State<_SubjectForm> {
       color: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
       topics: _topics,
       priority: _priority,
+      examDate: _examDate,
     );
     widget.onSave(subject);
     Navigator.pop(context);
   }
+}
+
+String _formatSubjectDate(DateTime d) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  return '${months[d.month - 1]} ${d.day}, ${d.year}';
+}
+
+String _subjectDaysLeft(DateTime d) {
+  final diff = d.difference(DateTime.now()).inDays;
+  if (diff < 0) return 'Passed';
+  if (diff == 0) return 'Today!';
+  if (diff == 1) return 'Tomorrow';
+  return '$diff days left';
 }
 
 Color _colorFromHex(String hex) {

@@ -495,7 +495,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   // Call to Action Button
                   ElevatedButton(
                     onPressed: () {
-                      context.go('/onboarding');
+                      context.go('/login');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentTerracotta,
@@ -521,6 +521,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         const SizedBox(width: 8),
                         const Icon(Icons.arrow_forward_rounded, size: 20),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => context.go('/login'),
+                      child: Text(
+                        'Already have an account? Sign In',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: accentTerracotta,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),

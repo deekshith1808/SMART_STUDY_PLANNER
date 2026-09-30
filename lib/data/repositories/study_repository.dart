@@ -15,6 +15,7 @@ class StudyRepository {
 
   // Sessions
   Future<List<StudySession>> getSessions() => _storage.loadSessions();
+  Future<void> saveSessions(List<StudySession> sessions) => _storage.saveSessions(sessions);
   Future<void> addSession(StudySession session) async {
     final sessions = await _storage.loadSessions();
     sessions.add(session);
@@ -23,6 +24,7 @@ class StudyRepository {
 
   // Tasks
   Future<List<ScheduledTask>> getTasks() => _storage.loadTasks();
+  Future<void> saveTasks(List<ScheduledTask> tasks) => _storage.saveTasks(tasks);
   Future<void> addTask(ScheduledTask task) async {
     final tasks = await _storage.loadTasks();
     tasks.add(task);

@@ -4,6 +4,7 @@ import 'package:smart_study_planner/data/repositories/study_repository.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 import 'package:smart_study_planner/domain/models/learning_journey.dart';
+import 'package:smart_study_planner/data/services/supabase_service.dart';
 
 enum PomodoroPhase { work, shortBreak, longBreak }
 
@@ -150,7 +151,7 @@ class PomodoroViewModel extends ChangeNotifier {
     _secondsRemaining = _totalSeconds;
   }
 
-  void _logSession() {
+  void _logSession() async {
     if (_selectedSubjectId == null) return;
     final session = StudySession(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -161,8 +162,17 @@ class PomodoroViewModel extends ChangeNotifier {
       durationMinutes: workMinutes,
       sessionType: 'pomodoro',
     );
-    _repository.addSession(session);
-    _repository.addXp(25);
+    await _repository.addSession(session);
+    await _repository.addXp(25);
+    final supa = SupabaseService();
+    if (supa.isAuthenticated) {
+      try {
+        final sessions = await _repository.getSessions();
+        await supa.syncSessions(sessions);
+        final progress = await _repository.getJourneyProgress();
+        await supa.syncJourney(progress);
+      } catch (_) {}
+    }
   }
 
   Future<void> updateSettings({
@@ -212,6 +222,7 @@ class StudyPlannerViewModel extends ChangeNotifier {
   }
 
   final StudyRepository _repository;
+  final _supabase = SupabaseService();
 
   UserProfile? _profile;
   List<StudySession> _sessions = [];
@@ -226,18 +237,22 @@ class StudyPlannerViewModel extends ChangeNotifier {
   List<StudySession> get sessions => List.unmodifiable(_sessions);
   List<ScheduledTask> get tasks => List.unmodifiable(_tasks);
   List<QuickNote> get notes => List.unmodifiable(_notes);
-  JourneyProgress get journeyProgress => _journeyProgress ?? JourneyProgress.defaultProgress();
+  JourneyProgress get journeyProgress =>
+      _journeyProgress ?? JourneyProgress.defaultProgress();
   bool get isLoading => _isLoading;
   int get selectedTabIndex => _selectedTabIndex;
   bool get isDarkMode => _isDarkMode;
+  bool get isAuthenticated => _supabase.isAuthenticated;
+  String? get userEmail => _supabase.currentUser?.email;
 
   List<ScheduledTask> get todayTasks {
     final today = DateTime.now();
-    return _tasks.where((t) =>
-      t.scheduledDate.year == today.year &&
-      t.scheduledDate.month == today.month &&
-      t.scheduledDate.day == today.day
-    ).toList();
+    return _tasks
+        .where((t) =>
+            t.scheduledDate.year == today.year &&
+            t.scheduledDate.month == today.month &&
+            t.scheduledDate.day == today.day)
+        .toList();
   }
 
   List<ScheduledTask> get pendingTasks =>
@@ -247,15 +262,16 @@ class StudyPlannerViewModel extends ChangeNotifier {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
     return _sessions
-        .where((s) => s.startTime.isAfter(weekStart))
-        .fold(0, (sum, s) => sum + s.durationMinutes) ~/
+            .where((s) => s.startTime.isAfter(weekStart))
+            .fold(0, (sum, s) => sum + s.durationMinutes) ~/
         60;
   }
 
   Map<String, int> get subjectStudyMinutes {
     final map = <String, int>{};
     for (final session in _sessions) {
-      map[session.subjectName] = (map[session.subjectName] ?? 0) + session.durationMinutes;
+      map[session.subjectName] =
+          (map[session.subjectName] ?? 0) + session.durationMinutes;
     }
     return map;
   }
@@ -280,13 +296,113 @@ class StudyPlannerViewModel extends ChangeNotifier {
     _notes = await _repository.getNotes();
     _journeyProgress = await _repository.getJourneyProgress();
 
+    // If logged in with Supabase, pull cloud updates seamlessly
+    if (_supabase.isAuthenticated) {
+      try {
+        final remoteProfile = await _supabase.fetchProfile();
+        if (remoteProfile != null) {
+          _profile = remoteProfile;
+          await _repository.saveProfile(remoteProfile);
+        }
+
+        final remoteJourney = await _supabase.fetchJourney();
+        if (remoteJourney != null) {
+          _journeyProgress = remoteJourney;
+          await _repository.saveJourneyProgress(remoteJourney);
+        }
+
+        final remoteSessions = await _supabase.fetchSessions();
+        if (remoteSessions.isNotEmpty) {
+          _sessions = remoteSessions;
+          await _repository.saveSessions(remoteSessions);
+        }
+
+        final remoteTasks = await _supabase.fetchTasks();
+        if (remoteTasks.isNotEmpty) {
+          _tasks = remoteTasks;
+          await _repository.saveTasks(remoteTasks);
+        }
+
+        final remoteNotes = await _supabase.fetchNotes();
+        if (remoteNotes.isNotEmpty) {
+          _notes = remoteNotes;
+          await _repository.saveNotes(remoteNotes);
+        }
+      } catch (e) {
+        debugPrint('ℹ️ [Cloud Load] Local cache used: $e');
+      }
+    }
+
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> syncWithSupabase() async {
+    if (!_supabase.isAuthenticated) return;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Fetch remote profile or push local
+      final remoteProfile = await _supabase.fetchProfile();
+      if (remoteProfile != null) {
+        _profile = remoteProfile;
+        await _repository.saveProfile(remoteProfile);
+      } else if (_profile != null) {
+        await _supabase.syncProfile(_profile!);
+      }
+
+      // 2. Fetch remote sessions or push local
+      final remoteSessions = await _supabase.fetchSessions();
+      if (remoteSessions.isNotEmpty) {
+        _sessions = remoteSessions;
+        await _repository.saveSessions(remoteSessions);
+      } else if (_sessions.isNotEmpty) {
+        await _supabase.syncSessions(_sessions);
+      }
+
+      // 3. Fetch remote tasks or push local
+      final remoteTasks = await _supabase.fetchTasks();
+      if (remoteTasks.isNotEmpty) {
+        _tasks = remoteTasks;
+        await _repository.saveTasks(remoteTasks);
+      } else if (_tasks.isNotEmpty) {
+        await _supabase.syncTasks(_tasks);
+      }
+
+      // 4. Fetch remote notes or push local
+      final remoteNotes = await _supabase.fetchNotes();
+      if (remoteNotes.isNotEmpty) {
+        _notes = remoteNotes;
+        await _repository.saveNotes(remoteNotes);
+      } else if (_notes.isNotEmpty) {
+        await _supabase.syncNotes(_notes);
+      }
+
+      // 5. Fetch remote journey or push local
+      final remoteJourney = await _supabase.fetchJourney();
+      if (remoteJourney != null) {
+        _journeyProgress = remoteJourney;
+        await _repository.saveJourneyProgress(remoteJourney);
+      } else if (_journeyProgress != null) {
+        await _supabase.syncJourney(_journeyProgress!);
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Supabase Sync Error]: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> saveProfile(UserProfile profile) async {
     await _repository.saveProfile(profile);
     _profile = profile;
+    if (_supabase.isAuthenticated) {
+      _supabase.syncProfile(profile).catchError((e) {
+        debugPrint('⚠️ Failed to sync profile: $e');
+      });
+    }
     notifyListeners();
   }
 
@@ -300,14 +416,16 @@ class StudyPlannerViewModel extends ChangeNotifier {
 
   Future<void> updateSubject(Subject subject) async {
     if (_profile == null) return;
-    final updatedSubjects = _profile!.subjects.map((s) => s.id == subject.id ? subject : s).toList();
+    final updatedSubjects =
+        _profile!.subjects.map((s) => s.id == subject.id ? subject : s).toList();
     final updated = _profile!.copyWith(subjects: updatedSubjects);
     await saveProfile(updated);
   }
 
   Future<void> deleteSubject(String subjectId) async {
     if (_profile == null) return;
-    final updatedSubjects = _profile!.subjects.where((s) => s.id != subjectId).toList();
+    final updatedSubjects =
+        _profile!.subjects.where((s) => s.id != subjectId).toList();
     final updated = _profile!.copyWith(subjects: updatedSubjects);
     await saveProfile(updated);
   }
@@ -315,6 +433,9 @@ class StudyPlannerViewModel extends ChangeNotifier {
   Future<void> addTask(ScheduledTask task) async {
     await _repository.addTask(task);
     _tasks = await _repository.getTasks();
+    if (_supabase.isAuthenticated) {
+      _supabase.syncTasks(_tasks).catchError((e) => debugPrint('Error syncing tasks: $e'));
+    }
     notifyListeners();
   }
 
@@ -324,37 +445,185 @@ class StudyPlannerViewModel extends ChangeNotifier {
     await _repository.updateTask(task.copyWith(isCompleted: willComplete));
     if (willComplete) {
       _journeyProgress = await _repository.addXp(15);
+      if (_supabase.isAuthenticated && _journeyProgress != null) {
+        _supabase.syncJourney(_journeyProgress!).catchError((e) => debugPrint('Error: $e'));
+      }
     }
     _tasks = await _repository.getTasks();
-    notifyListeners();
-  }
-
-  Future<void> completeJourneyNode(String nodeId) async {
-    _journeyProgress = await _repository.completeJourneyNode(nodeId);
-    notifyListeners();
-  }
-
-  Future<void> addXp(int xp) async {
-    _journeyProgress = await _repository.addXp(xp);
+    if (_supabase.isAuthenticated) {
+      _supabase.syncTasks(_tasks).catchError((e) => debugPrint('Error syncing tasks: $e'));
+    }
     notifyListeners();
   }
 
   Future<void> deleteTask(String taskId) async {
     await _repository.deleteTask(taskId);
     _tasks = await _repository.getTasks();
+    if (_supabase.isAuthenticated) {
+      _supabase.syncTasks(_tasks).catchError((e) => debugPrint('Error syncing tasks: $e'));
+    }
     notifyListeners();
   }
 
   Future<void> addNote(QuickNote note) async {
     await _repository.addNote(note);
     _notes = await _repository.getNotes();
+    if (_supabase.isAuthenticated) {
+      _supabase.syncNotes(_notes).catchError((e) => debugPrint('Error syncing notes: $e'));
+    }
     notifyListeners();
   }
 
   Future<void> deleteNote(String noteId) async {
     await _repository.deleteNote(noteId);
     _notes = await _repository.getNotes();
+    if (_supabase.isAuthenticated) {
+      _supabase.syncNotes(_notes).catchError((e) => debugPrint('Error syncing notes: $e'));
+    }
     notifyListeners();
+  }
+
+  // ─── Duolingo Learning Journey Management ──────────────────────────────────
+  Future<void> saveJourneyProgress(JourneyProgress progress) async {
+    await _repository.saveJourneyProgress(progress);
+    _journeyProgress = progress;
+    if (_supabase.isAuthenticated) {
+      _supabase.syncJourney(progress).catchError((e) => debugPrint('Error syncing journey: $e'));
+    }
+    notifyListeners();
+  }
+
+  Future<void> completeJourneyNode(String nodeId) async {
+    _journeyProgress = await _repository.completeJourneyNode(nodeId);
+    if (_supabase.isAuthenticated && _journeyProgress != null) {
+      _supabase.syncJourney(_journeyProgress!).catchError((e) => debugPrint('Error syncing journey: $e'));
+    }
+    notifyListeners();
+  }
+
+  Future<void> addXp(int xp) async {
+    _journeyProgress = await _repository.addXp(xp);
+    if (_supabase.isAuthenticated && _journeyProgress != null) {
+      _supabase.syncJourney(_journeyProgress!).catchError((e) => debugPrint('Error syncing journey: $e'));
+    }
+    notifyListeners();
+  }
+
+  /// Automatically generate journey levels from the student's enrolled subjects and topics
+  Future<void> generateJourneyFromSubjects({DateTime? examDate, String? hurdleTitle}) async {
+    if (_profile == null || _profile!.subjects.isEmpty) return;
+    final generated = JourneyProgress.fromSubjects(
+      _profile!.subjects,
+      customExamDate: examDate,
+      customTitle: hurdleTitle,
+      existingCompletedNodes: _journeyProgress?.nodes,
+    );
+    await saveJourneyProgress(generated);
+  }
+
+  /// Add a custom user-defined topic as a level in the learning journey
+  Future<void> addCustomJourneyTopic({
+    required String topicTitle,
+    required String subjectName,
+    NodeType type = NodeType.lesson,
+    int xpReward = 40,
+    String? description,
+  }) async {
+    final current = journeyProgress;
+    const offsets = [0.0, -0.45, 0.35, -0.4, 0.0, 0.45];
+    final newIndex = current.nodes.length;
+    final newOffset = offsets[newIndex % offsets.length];
+    final newStage = (newIndex ~/ 3) + 1;
+
+    final newNode = JourneyNode(
+      id: 'custom_node_${DateTime.now().millisecondsSinceEpoch}',
+      title: topicTitle.trim(),
+      description: description?.trim().isNotEmpty == true
+          ? description!.trim()
+          : 'Master $topicTitle concepts and practice problem patterns for $subjectName.',
+      subjectName: subjectName.trim(),
+      type: type,
+      status: current.nodes.isEmpty ? NodeStatus.active : NodeStatus.locked,
+      xpReward: xpReward,
+      stars: 0,
+      stage: newStage,
+      horizontalOffset: newOffset,
+    );
+
+    final updatedNodes = List<JourneyNode>.from(current.nodes)..add(newNode);
+    final completedCount = updatedNodes.where((n) => n.status == NodeStatus.completed).length;
+    final updatedHurdle = current.hurdle.copyWith(
+      requiredNodes: updatedNodes.length,
+      completedNodes: completedCount,
+    );
+
+    final updatedProgress = current.copyWith(
+      nodes: updatedNodes,
+      hurdle: updatedHurdle,
+    );
+
+    await saveJourneyProgress(updatedProgress);
+
+    // Also add to the Subject's topic list in UserProfile so it persists with the subject
+    if (_profile != null) {
+      final subjectIndex = _profile!.subjects.indexWhere(
+          (s) => s.name.toLowerCase() == subjectName.toLowerCase());
+      if (subjectIndex != -1) {
+        final targetSubject = _profile!.subjects[subjectIndex];
+        if (!targetSubject.topics.contains(topicTitle.trim())) {
+          final updatedSubject = targetSubject.copyWith(
+            topics: [...targetSubject.topics, topicTitle.trim()],
+          );
+          await updateSubject(updatedSubject);
+        }
+      }
+    }
+  }
+
+  /// Delete a journey level node
+  Future<void> deleteJourneyNode(String nodeId) async {
+    final current = journeyProgress;
+    final updatedNodes = current.nodes.where((n) => n.id != nodeId).toList();
+    final completedCount =
+        updatedNodes.where((n) => n.status == NodeStatus.completed).length;
+    final updatedHurdle = current.hurdle.copyWith(
+      requiredNodes: updatedNodes.length,
+      completedNodes: completedCount,
+    );
+    final updatedProgress = current.copyWith(
+      nodes: updatedNodes,
+      hurdle: updatedHurdle,
+    );
+    await saveJourneyProgress(updatedProgress);
+  }
+
+  /// Update the Hurdle Exam Date, title, and target score
+  Future<void> updateExamHurdle({
+    required DateTime examDate,
+    String? title,
+    double? targetScore,
+    String? subjectName,
+  }) async {
+    final current = journeyProgress;
+    final updatedHurdle = current.hurdle.copyWith(
+      examDate: examDate,
+      title: title ?? current.hurdle.title,
+      targetScore: targetScore ?? current.hurdle.targetScore,
+      subjectName: subjectName ?? current.hurdle.subjectName,
+    );
+    final updatedProgress = current.copyWith(hurdle: updatedHurdle);
+    await saveJourneyProgress(updatedProgress);
+
+    // Update matching subject's examDate as well
+    if (_profile != null && _profile!.subjects.isNotEmpty) {
+      final updatedSubjects = _profile!.subjects.map((s) {
+        if (s.name.toLowerCase() == updatedHurdle.subjectName.toLowerCase()) {
+          return s.copyWith(examDate: examDate);
+        }
+        return s;
+      }).toList();
+      await saveProfile(_profile!.copyWith(subjects: updatedSubjects));
+    }
   }
 
   Future<void> clearAll() async {

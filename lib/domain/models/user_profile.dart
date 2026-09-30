@@ -57,6 +57,7 @@ class Subject {
   final String color; // hex color string
   final List<String> topics;
   final int priority; // 1-5
+  final DateTime? examDate;
 
   const Subject({
     required this.id,
@@ -67,6 +68,7 @@ class Subject {
     required this.color,
     required this.topics,
     required this.priority,
+    this.examDate,
   });
 
   Subject copyWith({
@@ -77,6 +79,8 @@ class Subject {
     String? color,
     List<String>? topics,
     int? priority,
+    DateTime? examDate,
+    bool clearExamDate = false,
   }) {
     return Subject(
       id: id,
@@ -87,6 +91,7 @@ class Subject {
       color: color ?? this.color,
       topics: topics ?? this.topics,
       priority: priority ?? this.priority,
+      examDate: clearExamDate ? null : (examDate ?? this.examDate),
     );
   }
 
@@ -99,6 +104,7 @@ class Subject {
         'color': color,
         'topics': topics,
         'priority': priority,
+        'examDate': examDate?.toIso8601String(),
       };
 
   factory Subject.fromJson(Map<String, dynamic> json) => Subject(
@@ -110,5 +116,8 @@ class Subject {
         color: json['color'] ?? '#4CAF50',
         topics: List<String>.from(json['topics'] as List<dynamic>? ?? []),
         priority: json['priority'] as int? ?? 3,
+        examDate: json['examDate'] != null
+            ? DateTime.tryParse(json['examDate'] as String)
+            : null,
       );
 }
