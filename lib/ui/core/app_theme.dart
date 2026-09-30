@@ -39,8 +39,8 @@ class AppColors {
   static const darkCard = Color(0xFF0F172A); // Deep Slate / Midnight Black
   static const darkSurface = Color(0xFF1E1B4B); // Deep Royal Indigo / Purple Surface
   static const darkSurfaceVariant = Color(0xFF1E293B);
-  static const darkTextPrimary = Color(0xFFF8FAFC); // Crisp Bright White
-  static const darkTextSecondary = Color(0xFFCBD5E1); // Luminous Bright Silver Slate (Enhanced Visibility)
+  static const darkTextPrimary = Colors.white; // Crisp Pure Bright White
+  static const darkTextSecondary = Colors.white; // Crisp Pure Bright White
   static const darkBorder = Color(0xFF1E293B); // Dark Slate Border
   static const darkBorderAccent = Color(0xFF38BDF8); // Electric Blue Accent
 

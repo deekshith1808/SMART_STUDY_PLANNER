@@ -1343,7 +1343,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                color: isDark ? Colors.white : const Color(0xFF92400E),
                               ),
                             ),
                           ),
@@ -1474,7 +1474,7 @@ class _AICoachTabState extends State<_AICoachTab> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     height: 1.4,
-                    color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
+                    color: isDark ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               ],

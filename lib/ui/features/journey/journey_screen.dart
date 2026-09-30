@@ -786,7 +786,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                         size: 18,
                         color: isUnlocked
                             ? const Color(0xFFC2410C)
-                            : (isDark ? Colors.white70 : const Color(0xFF6B6258)),
+                            : (isDark ? Colors.white : const Color(0xFF6B6258)),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -796,7 +796,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                           fontWeight: FontWeight.w800,
                           color: isUnlocked
                               ? const Color(0xFFC2410C)
-                              : (isDark ? Colors.white70 : const Color(0xFF6B6258)),
+                              : (isDark ? Colors.white : const Color(0xFF6B6258)),
                         ),
                       ),
                     ],
@@ -1396,7 +1396,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    color: isDark ? Colors.white70 : const Color(0xFF796F65),
+                    color: isDark ? Colors.white : const Color(0xFF796F65),
                   ),
                 ),
               ),
@@ -1459,7 +1459,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white60 : const Color(0xFF796F65),
+                                color: isDark ? Colors.white : const Color(0xFF796F65),
                               ),
                             ),
                             Text(
@@ -1638,7 +1638,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        color: isDark ? Colors.white : const Color(0xFF5A524A),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1682,7 +1682,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        color: isDark ? Colors.white : const Color(0xFF5A524A),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1699,7 +1699,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        color: isDark ? Colors.white : const Color(0xFF5A524A),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1730,7 +1730,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                            color: isDark ? Colors.white : const Color(0xFF5A524A),
                           ),
                         ),
                       ],
@@ -1827,7 +1827,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        color: isDark ? Colors.white : const Color(0xFF5A524A),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1844,7 +1844,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        color: isDark ? Colors.white : const Color(0xFF5A524A),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1861,7 +1861,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                        color: isDark ? Colors.white : const Color(0xFF5A524A),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1892,7 +1892,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                            color: isDark ? Colors.white : const Color(0xFF5A524A),
                           ),
                         ),
                       ],
