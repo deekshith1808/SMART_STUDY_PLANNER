@@ -5,6 +5,7 @@ import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/data/services/supabase_service.dart';
 import 'package:smart_study_planner/ui/features/auth/supabase_sync_sheet.dart';
+import 'package:smart_study_planner/ui/features/pomodoro/focus_shield_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -76,6 +77,46 @@ class SettingsScreen extends StatelessWidget {
                           subtitle: 'Cozy dark palette for evening study',
                           value: vm.isDarkMode,
                           onChanged: (_) => vm.toggleDarkMode(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    // Focus Shield & Social Media Blocker
+                    _SettingsSection(
+                      title: 'Focus Shield & Anti-Distraction',
+                      children: [
+                        Consumer<PomodoroViewModel>(
+                          builder: (context, pomodoroVm, _) {
+                            final config = pomodoroVm.shieldConfig;
+                            final enabledApps = config.blockedApps.where((a) => a.isEnabled).length;
+                            return _SettingsTile(
+                              icon: Icons.shield_rounded,
+                              title: 'Social Media Blocker',
+                              subtitle: config.isShieldEnabled
+                                  ? 'Active during focus • $enabledApps apps guarded • ${config.blockedAttemptsCount} shielded'
+                                  : 'Disabled • Tap to configure',
+                              iconColor: const Color(0xFFDC2626),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: config.isShieldEnabled ? const Color(0xFFFEF2F2) : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: config.isShieldEnabled ? const Color(0xFFFECACA) : const Color(0xFFCBD5E1),
+                                  ),
+                                ),
+                                child: Text(
+                                  config.isShieldEnabled ? 'Guarded 🛡️' : 'Off',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: config.isShieldEnabled ? const Color(0xFF991B1B) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                              onTap: () => FocusShieldSheet.show(context, pomodoroVm),
+                            );
+                          },
                         ),
                       ],
                     ),

@@ -96,7 +96,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         studyHours: 0,
         color: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
         topics: [],
-        priority: 3,
+        priority: SubjectPriority.medium,
+        difficulty: SubjectDifficulty.medium,
       );
     }).toList();
 

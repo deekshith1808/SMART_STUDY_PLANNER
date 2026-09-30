@@ -2,6 +2,7 @@ import 'package:smart_study_planner/data/services/storage_service.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 import 'package:smart_study_planner/domain/models/learning_journey.dart';
+import 'package:smart_study_planner/domain/models/focus_shield.dart';
 
 class StudyRepository {
   StudyRepository({required StorageService storageService})
@@ -23,6 +24,7 @@ class StudyRepository {
 
   // Tasks
   Future<List<ScheduledTask>> getTasks() => _storage.loadTasks();
+  Future<void> saveTasks(List<ScheduledTask> tasks) => _storage.saveTasks(tasks);
   Future<void> addTask(ScheduledTask task) async {
     final tasks = await _storage.loadTasks();
     tasks.add(task);
@@ -117,6 +119,10 @@ class StudyRepository {
     await _storage.saveJourneyProgress(updated);
     return updated;
   }
+
+  // Focus Shield & Social Media Blocker
+  Future<FocusShieldConfig> getFocusShieldConfig() => _storage.loadFocusShieldConfig();
+  Future<void> saveFocusShieldConfig(FocusShieldConfig config) => _storage.saveFocusShieldConfig(config);
 
   Future<void> clearAll() => _storage.clearAll();
 }
