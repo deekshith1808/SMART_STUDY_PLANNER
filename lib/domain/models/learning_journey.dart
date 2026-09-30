@@ -184,16 +184,44 @@ class JourneyProgress {
   final DateTime? lastStudyDate;
   final bool hasStreakShield;
   final List<JourneyNode> nodes;
-  final ExamHurdle hurdle;
+  final List<ExamHurdle> hurdles;
 
-  const JourneyProgress({
+  JourneyProgress({
     required this.totalXp,
     required this.currentStreak,
     this.lastStudyDate,
     this.hasStreakShield = true,
     required this.nodes,
-    required this.hurdle,
-  });
+    List<ExamHurdle>? hurdles,
+    ExamHurdle? hurdle,
+  }) : hurdles = hurdles ?? (hurdle != null ? [hurdle] : const []);
+
+  ExamHurdle get hurdle =>
+      activeHurdle ?? (hurdles.isNotEmpty ? hurdles.first : _defaultHurdle());
+
+  ExamHurdle? get activeHurdle {
+    if (hurdles.isEmpty) return null;
+    final upcoming = hurdles.where((h) => h.daysRemaining >= 0).toList()
+      ..sort((a, b) => a.examDate.compareTo(b.examDate));
+    if (upcoming.isNotEmpty) return upcoming.first;
+    return hurdles.first;
+  }
+
+  List<ExamHurdle> get sortedHurdles {
+    final list = List<ExamHurdle>.from(hurdles);
+    list.sort((a, b) => a.examDate.compareTo(b.examDate));
+    return list;
+  }
+
+  static ExamHurdle _defaultHurdle() => ExamHurdle(
+        id: 'hurdle_default',
+        title: 'Semester Final Exam',
+        subjectName: 'Core Subjects',
+        examDate: DateTime.now().add(const Duration(days: 7)),
+        targetScore: 90.0,
+        requiredNodes: 5,
+        completedNodes: 0,
+      );
 
   int get level => (totalXp ~/ 120) + 1;
 
@@ -202,7 +230,8 @@ class JourneyProgress {
     if (level <= 2) return 'Focus Apprentice';
     if (level <= 3) return 'Mastery Seeker';
     if (level <= 4) return 'Syllabus Crusher';
-    return 'Exam Champion';
+    if (level <= 5) return 'Exam Grandmaster';
+    return 'Scholar of Eminence';
   }
 
   int get xpForNextLevel => (level * 120) - totalXp;
@@ -214,6 +243,7 @@ class JourneyProgress {
     DateTime? lastStudyDate,
     bool? hasStreakShield,
     List<JourneyNode>? nodes,
+    List<ExamHurdle>? hurdles,
     ExamHurdle? hurdle,
   }) {
     return JourneyProgress(
@@ -222,7 +252,7 @@ class JourneyProgress {
       lastStudyDate: lastStudyDate ?? this.lastStudyDate,
       hasStreakShield: hasStreakShield ?? this.hasStreakShield,
       nodes: nodes ?? this.nodes,
-      hurdle: hurdle ?? this.hurdle,
+      hurdles: hurdles ?? (hurdle != null ? [hurdle] : this.hurdles),
     );
   }
 
@@ -232,31 +262,36 @@ class JourneyProgress {
         'lastStudyDate': lastStudyDate?.toIso8601String(),
         'hasStreakShield': hasStreakShield,
         'nodes': nodes.map((n) => n.toJson()).toList(),
+        'hurdles': hurdles.map((h) => h.toJson()).toList(),
         'hurdle': hurdle.toJson(),
       };
 
-  factory JourneyProgress.fromJson(Map<String, dynamic> json) => JourneyProgress(
-        totalXp: json['totalXp'] as int? ?? 280,
-        currentStreak: json['currentStreak'] as int? ?? 5,
-        lastStudyDate: json['lastStudyDate'] != null
-            ? DateTime.tryParse(json['lastStudyDate'] as String)
-            : null,
-        hasStreakShield: json['hasStreakShield'] as bool? ?? true,
-        nodes: (json['nodes'] as List<dynamic>? ?? [])
-            .map((e) => JourneyNode.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        hurdle: json['hurdle'] != null
-            ? ExamHurdle.fromJson(json['hurdle'] as Map<String, dynamic>)
-            : ExamHurdle(
-                id: 'hurdle_1',
-                title: 'Midterm Semester Exam',
-                subjectName: 'Core Sciences & Math',
-                examDate: DateTime.now().add(const Duration(days: 6)),
-                targetScore: 95.0,
-                requiredNodes: 5,
-                completedNodes: 2,
-              ),
-      );
+  factory JourneyProgress.fromJson(Map<String, dynamic> json) {
+    final hurdlesList = (json['hurdles'] as List<dynamic>? ?? [])
+        .map((e) => ExamHurdle.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    if (hurdlesList.isEmpty && json['hurdle'] != null) {
+      hurdlesList.add(ExamHurdle.fromJson(json['hurdle'] as Map<String, dynamic>));
+    }
+
+    if (hurdlesList.isEmpty) {
+      hurdlesList.add(_defaultHurdle());
+    }
+
+    return JourneyProgress(
+      totalXp: json['totalXp'] as int? ?? 120,
+      currentStreak: json['currentStreak'] as int? ?? 1,
+      lastStudyDate: json['lastStudyDate'] != null
+          ? DateTime.tryParse(json['lastStudyDate'] as String)
+          : null,
+      hasStreakShield: json['hasStreakShield'] as bool? ?? true,
+      nodes: (json['nodes'] as List<dynamic>? ?? [])
+          .map((e) => JourneyNode.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      hurdles: hurdlesList,
+    );
+  }
 
   static JourneyProgress defaultProgress() {
     final now = DateTime.now();
@@ -359,6 +394,9 @@ class JourneyProgress {
     DateTime? customExamDate,
     String? customTitle,
     List<JourneyNode>? existingCompletedNodes,
+    int? existingXp,
+    int? existingStreak,
+    List<ExamHurdle>? existingHurdles,
   }) {
     final nodes = <JourneyNode>[];
     const offsets = [0.0, -0.45, 0.35, -0.4, 0.0, 0.45];
@@ -437,38 +475,71 @@ class JourneyProgress {
       }
     }
 
-    DateTime examDate = customExamDate ??
-        subjects
-            .map((s) => s.examDate)
-            .whereType<DateTime>()
-            .fold<DateTime?>(null,
-                (min, d) => min == null || d.isBefore(min) ? d : min) ??
-        DateTime.now().add(const Duration(days: 14));
+    // Build multiple hurdles for subjects with exam dates or custom hurdle
+    final hurdleList = <ExamHurdle>[];
+    if (existingHurdles != null && existingHurdles.isNotEmpty) {
+      hurdleList.addAll(existingHurdles);
+    } else {
+      for (final s in subjects) {
+        if (s.examDate != null) {
+          final subjectNodes = nodes
+              .where((n) => n.subjectName.toLowerCase() == s.name.toLowerCase())
+              .toList();
+          final reqNodes = subjectNodes.isNotEmpty ? subjectNodes.length : 3;
+          final doneNodes = subjectNodes
+              .where((n) => n.status == NodeStatus.completed)
+              .length;
+
+          hurdleList.add(ExamHurdle(
+            id: 'hurdle_${s.id}',
+            title: '${s.name} Exam Hurdle',
+            subjectName: s.name,
+            examDate: s.examDate!,
+            targetScore: s.targetMarks,
+            requiredNodes: reqNodes,
+            completedNodes: doneNodes,
+            isPassed: doneNodes >= reqNodes,
+          ));
+        }
+      }
+
+      if (hurdleList.isEmpty) {
+        DateTime examDate = customExamDate ??
+            DateTime.now().add(const Duration(days: 14));
+        final completedCount =
+            nodes.where((n) => n.status == NodeStatus.completed).length;
+
+        hurdleList.add(ExamHurdle(
+          id: 'hurdle_${DateTime.now().millisecondsSinceEpoch}',
+          title: customTitle ??
+              (subjects.isNotEmpty
+                  ? '${subjects.first.name} Final Exam'
+                  : 'Semester Final Exam'),
+          subjectName:
+              subjects.isNotEmpty ? subjects.first.name : 'Core Subjects',
+          examDate: examDate,
+          targetScore: subjects.isNotEmpty ? subjects.first.targetMarks : 90.0,
+          requiredNodes: nodes.length,
+          completedNodes: completedCount,
+          isPassed: completedCount >= nodes.length,
+        ));
+      }
+    }
+
+    hurdleList.sort((a, b) => a.examDate.compareTo(b.examDate));
 
     final completedCount =
         nodes.where((n) => n.status == NodeStatus.completed).length;
-
-    final hurdle = ExamHurdle(
-      id: 'hurdle_${DateTime.now().millisecondsSinceEpoch}',
-      title: customTitle ??
-          (subjects.isNotEmpty
-              ? '${subjects.first.name} Final Exam'
-              : 'Semester Final Exam'),
-      subjectName: subjects.isNotEmpty ? subjects.first.name : 'Core Subjects',
-      examDate: examDate,
-      targetScore: subjects.isNotEmpty ? subjects.first.targetMarks : 90.0,
-      requiredNodes: nodes.length,
-      completedNodes: completedCount,
-      isPassed: completedCount >= nodes.length,
-    );
+    final totalXp = existingXp ?? ((completedCount * 35) + 120);
+    final streak = existingStreak ?? 3;
 
     return JourneyProgress(
-      totalXp: (completedCount * 35) + 120,
-      currentStreak: 3,
+      totalXp: totalXp,
+      currentStreak: streak,
       lastStudyDate: DateTime.now(),
       hasStreakShield: true,
       nodes: nodes,
-      hurdle: hurdle,
+      hurdles: hurdleList,
     );
   }
 }

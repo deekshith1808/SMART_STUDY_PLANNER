@@ -87,46 +87,40 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (_isSignUp) {
         final res = await _supabase.signUp(email: email, password: password);
-        if (res?.session != null || res?.user != null) {
-          // Initialize user profile in database
-          final currentProfile = vm.profile;
+        final userId = res?.user?.id ?? res?.session?.user.id;
+        if (userId != null) {
+          await vm.onUserAuthenticated(userId);
+          // Initialize fresh user profile in database
           final userProfile = UserProfile(
             name: name,
-            educationType: currentProfile?.educationType ?? 'college',
-            branch: currentProfile?.branch,
-            course: currentProfile?.course,
-            subjects: currentProfile?.subjects ?? [],
+            educationType: 'school',
+            subjects: [],
           );
           await vm.saveProfile(userProfile);
-          await vm.syncWithSupabase();
 
           setState(() {
             _successMessage =
-                'Account created! Your subjects, topics, and study history are stored in Supabase.';
+                'Account created! Let\'s set up your education details.';
           });
 
-          await Future.delayed(const Duration(milliseconds: 700));
+          await Future.delayed(const Duration(milliseconds: 600));
           if (!mounted) return;
 
-          if (userProfile.subjects.isEmpty) {
-            context.go('/onboarding');
-          } else {
-            context.go('/home');
-          }
+          context.go('/onboarding');
         }
       } else {
         // Sign in
         final res = await _supabase.signIn(email: email, password: password);
         if (res?.user != null) {
-          // Restore all past data: subjects, custom topics, pomodoro sessions, tasks, notes!
-          await vm.syncWithSupabase();
+          // Switch to this user's isolated data
+          await vm.onUserAuthenticated(res!.user!.id);
 
           setState(() {
             _successMessage =
                 'Welcome back! Your subjects and past history have been restored.';
           });
 
-          await Future.delayed(const Duration(milliseconds: 700));
+          await Future.delayed(const Duration(milliseconds: 600));
           if (!mounted) return;
 
           if (vm.profile == null || vm.profile!.subjects.isEmpty) {

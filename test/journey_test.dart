@@ -124,5 +124,100 @@ void main() {
       expect(journey.hurdle.examDate.month, examDate.month);
       expect(journey.hurdle.examDate.day, examDate.day);
     });
+
+    test('Multiple exam hurdles are ordered chronologically by sortedHurdles', () {
+      final now = DateTime.now();
+      final h1 = ExamHurdle(
+        id: 'h_math',
+        title: 'Maths Exam',
+        subjectName: 'Maths',
+        examDate: now.add(const Duration(days: 3)),
+        targetScore: 90,
+        requiredNodes: 5,
+        completedNodes: 0,
+      );
+      final h2 = ExamHurdle(
+        id: 'h_physics',
+        title: 'Physics Exam',
+        subjectName: 'Physics',
+        examDate: now.add(const Duration(days: 1)),
+        targetScore: 85,
+        requiredNodes: 5,
+        completedNodes: 0,
+      );
+      final h3 = ExamHurdle(
+        id: 'h_chem',
+        title: 'Chemistry Exam',
+        subjectName: 'Chemistry',
+        examDate: now.add(const Duration(days: 5)),
+        targetScore: 88,
+        requiredNodes: 5,
+        completedNodes: 0,
+      );
+
+      final journey = JourneyProgress(
+        currentStreak: 5,
+        totalXp: 100,
+        nodes: [],
+        hurdle: h1,
+        hurdles: [h1, h2, h3],
+      );
+
+      final sorted = journey.sortedHurdles;
+      expect(sorted.length, 3);
+      expect(sorted[0].subjectName, 'Physics'); // 1 day
+      expect(sorted[1].subjectName, 'Maths');   // 3 days
+      expect(sorted[2].subjectName, 'Chemistry'); // 5 days
+    });
+
+    test('Per-account isolation scopes data to the specific user profile', () async {
+      storage.setUserId('user_deekshith');
+      await storage.saveProfile(UserProfile(
+        name: 'Deekshith',
+        educationType: 'college',
+        subjects: [
+          Subject(
+            id: 's1',
+            name: 'Computer Science',
+            marks: 95,
+            targetMarks: 100,
+            studyHours: 20,
+            color: '#C2410C',
+            priority: 5,
+            topics: ['Algorithms'],
+          ),
+        ],
+      ));
+
+      // Switch to another account
+      storage.setUserId('user_sarah');
+      final sarahProfile = await storage.loadProfile();
+      // Should NOT see Deekshith's subjects
+      expect(sarahProfile?.name, isNot('Deekshith'));
+
+      await storage.saveProfile(UserProfile(
+        name: 'Sarah',
+        educationType: 'school',
+        subjects: [
+          Subject(
+            id: 's2',
+            name: 'Biology',
+            marks: 88,
+            targetMarks: 95,
+            studyHours: 15,
+            color: '#047857',
+            priority: 4,
+            topics: ['Genetics'],
+          ),
+        ],
+      ));
+
+      // Switch back to Deekshith
+      storage.setUserId('user_deekshith');
+      final deekshithProfile = await storage.loadProfile();
+      expect(deekshithProfile?.name, 'Deekshith');
+      expect(deekshithProfile?.subjects.first.name, 'Computer Science');
+    });
   });
 }
+

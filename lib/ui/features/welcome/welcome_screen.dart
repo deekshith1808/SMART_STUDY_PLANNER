@@ -27,28 +27,36 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     {
       'icon': Icons.timer_outlined,
       'title': 'Mindful Pomodoro',
-      'desc': 'Customizable focus & break intervals tailored to your rhythm.',
+      'tag': 'FOCUS',
+      'stat': '25m Sprint',
+      'desc': 'Customizable focus & break intervals with live subject focus hub.',
       'color': Color(0xFFD97706),
       'bg': Color(0xFFFEF3C7),
     },
     {
-      'icon': Icons.track_changes_rounded,
-      'title': 'Marks & Target Tracker',
-      'desc': 'Record current scores, set target grades, and see progress.',
+      'icon': Icons.castle_rounded,
+      'title': 'Exam Quest Hurdles',
+      'tag': 'QUEST',
+      'stat': 'Levels & XP',
+      'desc': 'Overcome exam date hurdles through interactive topic levels.',
       'color': Color(0xFF2563EB),
       'bg': Color(0xFFDBEAFE),
     },
     {
       'icon': Icons.calendar_today_rounded,
-      'title': 'Smart Daily Schedule',
-      'desc': 'Interactive timetable with task reminders and deadlines.',
+      'title': 'Smart Timetable',
+      'tag': 'ROUTINE',
+      'stat': 'Auto Remind',
+      'desc': 'Interactive timetable with task reminders and hurdle sync.',
       'color': Color(0xFF059669),
       'bg': Color(0xFFD1FAE5),
     },
     {
       'icon': Icons.sticky_note_2_outlined,
       'title': 'Quick Sticky Notes',
-      'desc': 'Jot down formulas, ideas, and revision cues in seconds.',
+      'tag': 'NOTES',
+      'stat': 'Fast Cues',
+      'desc': 'Pin formulas, revision cues, and exam summaries in seconds.',
       'color': Color(0xFF7C3AED),
       'bg': Color(0xFFEDE9FE),
     },
@@ -424,11 +432,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 1.15,
+                      childAspectRatio: 0.98,
                     ),
                     itemCount: _features.length,
                     itemBuilder: (context, index) {
                       final f = _features[index];
+                      final color = f['color'] as Color;
+                      final bg = f['bg'] as Color;
                       return Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -436,51 +446,105 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white10
+                                ? color.withAlpha(50)
                                 : const Color(0xFFEBE3D7),
+                            width: 1.2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(isDark ? 30 : 10),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              color: color.withAlpha(isDark ? 25 : 12),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: (f['bg'] as Color)
-                                    .withAlpha(isDark ? 40 : 255),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                f['icon'] as IconData,
-                                size: 18,
-                                color: f['color'] as Color,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: bg.withAlpha(isDark ? 45 : 255),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: color.withAlpha(40),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    f['icon'] as IconData,
+                                    size: 18,
+                                    color: color,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: color.withAlpha(isDark ? 30 : 20),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    f['tag'] as String,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: color,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const Spacer(),
                             Text(
                               f['title'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               f['desc'] as String,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 11,
-                                height: 1.3,
+                                fontSize: 10.5,
+                                height: 1.25,
                                 color: textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withAlpha(10)
+                                    : const Color(0xFFF5EFE6),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.bolt_rounded,
+                                      size: 12, color: color),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    f['stat'] as String,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white70 : color,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

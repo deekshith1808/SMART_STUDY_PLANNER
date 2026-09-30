@@ -11,6 +11,7 @@ import 'package:smart_study_planner/ui/features/analytics/analytics_screen.dart'
 import 'package:smart_study_planner/ui/features/settings/settings_screen.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
+import 'package:smart_study_planner/domain/models/learning_journey.dart';
 import 'package:smart_study_planner/ui/features/auth/supabase_sync_sheet.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -177,43 +178,118 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-class _QuickNoteDialog extends StatelessWidget {
-  final _titleCtrl = TextEditingController();
-  final _contentCtrl = TextEditingController();
+class _QuickNoteDialog extends StatefulWidget {
+  const _QuickNoteDialog();
 
-  _QuickNoteDialog();
+  @override
+  State<_QuickNoteDialog> createState() => _QuickNoteDialogState();
+}
+
+class _QuickNoteDialogState extends State<_QuickNoteDialog> {
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _contentCtrl;
+  String? _selectedSubjectId;
+  String? _selectedSubjectName;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleCtrl = TextEditingController();
+    _contentCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _contentCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.read<StudyPlannerViewModel>();
     final subjects = vm.profile?.subjects ?? [];
+    if (_selectedSubjectId == null && subjects.isNotEmpty) {
+      _selectedSubjectId = subjects.first.id;
+      _selectedSubjectName = subjects.first.name;
+    }
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: Text(
-        'Quick Sticky Note 📝',
-        style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+      title: Row(
         children: [
-          TextField(
-            controller: _titleCtrl,
-            decoration: const InputDecoration(
-              hintText: 'Note title (e.g. Formula recall)',
-              prefixIcon: Icon(Icons.title_rounded, color: AppColors.primary),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: const Text('📌', style: TextStyle(fontSize: 18)),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _contentCtrl,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'Write your thought, insight or reminder...',
-              prefixIcon: Icon(Icons.notes_rounded, color: AppColors.accent),
-            ),
+          const SizedBox(width: 10),
+          Text(
+            'Quick Sticky Note',
+            style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
         ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (subjects.isNotEmpty) ...[
+              Text(
+                'Subject Tag',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedSubjectId,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                items: [
+                  const DropdownMenuItem(value: '', child: Text('General / Miscellaneous')),
+                  ...subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    _selectedSubjectId = val;
+                    if (val == null || val.isEmpty) {
+                      _selectedSubjectName = 'General';
+                    } else {
+                      final found = subjects.firstWhere((s) => s.id == val, orElse: () => subjects.first);
+                      _selectedSubjectName = found.name;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
+            ],
+            TextField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Note title (e.g. Formula recall)',
+                prefixIcon: Icon(Icons.title_rounded, color: AppColors.primary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _contentCtrl,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'Write your thought, insight or reminder...',
+                prefixIcon: Icon(Icons.notes_rounded, color: AppColors.accent),
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -230,8 +306,8 @@ class _QuickNoteDialog extends StatelessWidget {
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                 title: _titleCtrl.text.trim(),
                 content: _contentCtrl.text.trim(),
-                subjectId: subjects.isNotEmpty ? subjects.first.id : '',
-                subjectName: subjects.isNotEmpty ? subjects.first.name : 'General',
+                subjectId: _selectedSubjectId ?? '',
+                subjectName: _selectedSubjectName ?? 'General',
                 createdAt: DateTime.now(),
                 updatedAt: DateTime.now(),
               );
@@ -243,7 +319,7 @@ class _QuickNoteDialog extends StatelessWidget {
             backgroundColor: AppColors.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: const Text('Save Note'),
+          child: const Text('Pin Note 📌'),
         ),
       ],
     );
@@ -381,11 +457,17 @@ class _DashboardTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Duolingo Exam Quest Hurdle Banner
+                // Duolingo Exam Quest Hurdle Banner & Urgent Alert
                 _ExamJourneyBanner(vm: vm),
+                const SizedBox(height: 14),
+                // Upcoming Exam Schedule & Wizard Strip
+                _UpcomingExamsStrip(vm: vm),
                 const SizedBox(height: 20),
                 // Quick stats row
                 _StatsRow(vm: vm),
+                const SizedBox(height: 24),
+                // Prominent Sticky Notes Pinboard
+                _StickyNotesPinboardSection(vm: vm),
                 const SizedBox(height: 24),
                 // Subjects quick view
                 _SubjectCardsSection(vm: vm),
@@ -417,22 +499,25 @@ class _ExamJourneyBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = vm.journeyProgress;
     final hurdle = progress.hurdle;
+    final isUrgent = hurdle.daysRemaining <= 2;
 
     return GestureDetector(
       onTap: () => vm.setTabIndex(1),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFC2410C), Color(0xFF9A3412)],
+          gradient: LinearGradient(
+            colors: isUrgent
+                ? [const Color(0xFFB91C1C), const Color(0xFF991B1B)]
+                : [const Color(0xFFC2410C), const Color(0xFF9A3412)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFC2410C).withAlpha(80),
-              blurRadius: 12,
+              color: (isUrgent ? const Color(0xFFB91C1C) : const Color(0xFFC2410C)).withAlpha(90),
+              blurRadius: 14,
               offset: const Offset(0, 5),
             ),
           ],
@@ -444,17 +529,19 @@ class _ExamJourneyBanner extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(40),
+                    color: Colors.white.withAlpha(isUrgent ? 55 : 40),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: [
-                      const Text('🎯', style: TextStyle(fontSize: 12)),
+                      Text(isUrgent ? '🚨' : '🎯', style: const TextStyle(fontSize: 12)),
                       const SizedBox(width: 4),
                       Text(
-                        'FIRST HURDLE: ${hurdle.daysRemaining} DAYS LEFT',
+                        isUrgent
+                            ? 'EXAM ${hurdle.daysRemaining == 0 ? "TODAY" : hurdle.daysRemaining == 1 ? "TOMORROW" : "IN 2 DAYS"}: ${hurdle.subjectName.toUpperCase()}'
+                            : 'NEXT HURDLE: ${hurdle.daysRemaining} DAYS LEFT',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
@@ -505,10 +592,10 @@ class _ExamJourneyBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Level ${progress.level} • ${hurdle.completedNodes}/${hurdle.requiredNodes} Conquered • ${progress.totalXp} XP',
+                        '${hurdle.subjectName} • Target: ${hurdle.targetScore.toInt()}% • Level ${progress.level} • ${hurdle.completedNodes}/${hurdle.requiredNodes} Done • ${progress.totalXp} XP',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: Colors.white.withAlpha(220),
+                          fontSize: 11.5,
+                          color: Colors.white.withAlpha(230),
                         ),
                       ),
                     ],
@@ -538,6 +625,792 @@ class _ExamJourneyBanner extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _UpcomingExamsStrip extends StatelessWidget {
+  final StudyPlannerViewModel vm;
+  const _UpcomingExamsStrip({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final hurdles = vm.journeyProgress.sortedHurdles;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Text('📅', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
+                Text(
+                  'Upcoming Exam Schedule',
+                  style: GoogleFonts.lora(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+              onTap: () => showDialog(
+                context: context,
+                builder: (_) => _ExamScheduleWizardDialog(vm: vm),
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_rounded, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Add Exam',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (hurdles.isEmpty)
+          GestureDetector(
+            onTap: () => showDialog(
+              context: context,
+              builder: (_) => _ExamScheduleWizardDialog(vm: vm),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.event_note_rounded, size: 18, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'No exam dates set yet. Tap to add your exam schedule!',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 52,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: hurdles.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final hurdle = hurdles[i];
+                final isUrgent = hurdle.daysRemaining <= 2;
+                final bg = isUrgent ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7);
+                final border = isUrgent ? const Color(0xFFF87171) : const Color(0xFFFCD34D);
+                final textColor = isUrgent ? const Color(0xFF991B1B) : const Color(0xFF92400E);
+
+                return GestureDetector(
+                  onTap: () => _showHurdleQuickOptions(context, hurdle),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: border, width: 1.2),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(isUrgent ? '🚨' : '🎯', style: const TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              hurdle.subjectName,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: textColor,
+                              ),
+                            ),
+                            Text(
+                              '${hurdle.formattedExamDate} (${hurdle.daysRemainingText})',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: textColor.withAlpha(200),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showHurdleQuickOptions(BuildContext context, ExamHurdle hurdle) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('🎯', style: TextStyle(fontSize: 22)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hurdle.title,
+                        style: GoogleFonts.lora(fontSize: 17, fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        '${hurdle.subjectName} • Exam on ${hurdle.formattedExamDate} (${hurdle.daysRemainingText})',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.explore_rounded, color: Color(0xFFC2410C)),
+              title: Text('View in Quest Journey', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              subtitle: const Text('Conquer prerequisite topic levels for this hurdle'),
+              onTap: () {
+                Navigator.pop(ctx);
+                vm.setTabIndex(1);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer_outlined, color: AppColors.primary),
+              title: Text('Launch Focus Timer for ${hurdle.subjectName}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              subtitle: const Text('Start an immediate Pomodoro session'),
+              onTap: () {
+                Navigator.pop(ctx);
+                vm.setTabIndex(2);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+              title: Text('Delete Hurdle', style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontWeight: FontWeight.w700)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await vm.deleteExamHurdle(hurdle.id);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExamScheduleWizardDialog extends StatefulWidget {
+  final StudyPlannerViewModel vm;
+  const _ExamScheduleWizardDialog({required this.vm});
+
+  @override
+  State<_ExamScheduleWizardDialog> createState() => _ExamScheduleWizardDialogState();
+}
+
+class _ExamScheduleWizardDialogState extends State<_ExamScheduleWizardDialog> {
+  final _titleCtrl = TextEditingController();
+  final _customSubjectCtrl = TextEditingController();
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
+  String? _selectedSubject;
+  bool _isCustom = false;
+  double _targetScore = 95.0;
+  bool _createStudyTask = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final subjects = widget.vm.profile?.subjects ?? [];
+    if (subjects.isNotEmpty) {
+      _selectedSubject = subjects.first.name;
+      _titleCtrl.text = '${subjects.first.name} Final Exam';
+    } else {
+      _isCustom = true;
+      _titleCtrl.text = 'Semester Final Exam';
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _customSubjectCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final subjects = widget.vm.profile?.subjects ?? [];
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC2410C).withAlpha(25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text('🎯', style: TextStyle(fontSize: 18)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Add Exam Hurdle', style: GoogleFonts.lora(fontWeight: FontWeight.w700, fontSize: 17)),
+                Text(
+                  'Auto-notifies on home & sets quest target',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Subject', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            if (subjects.isNotEmpty) ...[
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  ...subjects.map((s) {
+                    final isSel = !_isCustom && _selectedSubject == s.name;
+                    return ChoiceChip(
+                      label: Text(s.name),
+                      selected: isSel,
+                      onSelected: (sel) {
+                        if (sel) {
+                          setState(() {
+                            _isCustom = false;
+                            _selectedSubject = s.name;
+                            _titleCtrl.text = '${s.name} Exam';
+                          });
+                        }
+                      },
+                    );
+                  }),
+                  ChoiceChip(
+                    label: const Text('+ Custom'),
+                    selected: _isCustom,
+                    onSelected: (sel) {
+                      setState(() {
+                        _isCustom = true;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (_isCustom) ...[
+              TextField(
+                controller: _customSubjectCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Enter subject name (e.g. Physics, Data Structures)',
+                  prefixIcon: Icon(Icons.book_rounded),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Text('Hurdle Title', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Midterm Physics Exam, Finals',
+                prefixIcon: Icon(Icons.flag_rounded),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text('Exam Date', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                  lastDate: DateTime.now().add(const Duration(days: 730)),
+                );
+                if (picked != null) {
+                  setState(() => _selectedDate = picked);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_month_rounded, color: Color(0xFFC2410C), size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Change',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFFC2410C), fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Target Score: ${_targetScore.toInt()}%', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                Text('High Distinction', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.secondary, fontWeight: FontWeight.w700)),
+              ],
+            ),
+            Slider(
+              value: _targetScore,
+              min: 50,
+              max: 100,
+              divisions: 10,
+              activeColor: const Color(0xFFC2410C),
+              onChanged: (v) => setState(() => _targetScore = v),
+            ),
+            CheckboxListTile(
+              value: _createStudyTask,
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Auto-create study preparation tasks in Schedule',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              onChanged: (v) => setState(() => _createStudyTask = v ?? true),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final nav = Navigator.of(context);
+            final messenger = ScaffoldMessenger.of(context);
+            final subjectName = _isCustom
+                ? (_customSubjectCtrl.text.trim().isNotEmpty ? _customSubjectCtrl.text.trim() : 'General Subject')
+                : (_selectedSubject ?? 'General Subject');
+            final title = _titleCtrl.text.trim().isNotEmpty ? _titleCtrl.text.trim() : '$subjectName Exam';
+
+            final hurdle = ExamHurdle(
+              id: 'hurdle_${DateTime.now().millisecondsSinceEpoch}',
+              title: title,
+              subjectName: subjectName,
+              examDate: _selectedDate,
+              targetScore: _targetScore,
+              requiredNodes: 4,
+              completedNodes: 0,
+            );
+
+            await widget.vm.addExamHurdle(hurdle);
+
+            if (_createStudyTask) {
+              final subjects = widget.vm.profile?.subjects ?? [];
+              final found = subjects.where((s) => s.name.toLowerCase() == subjectName.toLowerCase()).firstOrNull;
+              final task = ScheduledTask(
+                id: 'exam_prep_${DateTime.now().millisecondsSinceEpoch}',
+                title: 'Revise & Prep for $title',
+                subjectId: found?.id ?? '',
+                subjectName: subjectName,
+                scheduledDate: _selectedDate.subtract(const Duration(days: 1)),
+                startTime: '10:00 AM',
+                endTime: '11:30 AM',
+                priority: 'high',
+                isCompleted: false,
+              );
+              await widget.vm.addTask(task);
+            }
+
+            nav.pop();
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  '🎯 Assigned "$title" on ${_selectedDate.day}/${_selectedDate.month}! Added to Quest & Home alerts.',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                ),
+                backgroundColor: const Color(0xFFC2410C),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFC2410C),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: const Text('Set Exam & Hurdle'),
+        ),
+      ],
+    );
+  }
+}
+
+class _StickyNotesPinboardSection extends StatelessWidget {
+  final StudyPlannerViewModel vm;
+  const _StickyNotesPinboardSection({required this.vm});
+
+  static const _pastelBgs = [
+    Color(0xFFFEF3C7), // warm amber/yellow
+    Color(0xFFD1FAE5), // soft emerald mint
+    Color(0xFFEDE9FE), // lavender
+    Color(0xFFFFEDD5), // soft peach
+    Color(0xFFCFFAFE), // sky aqua
+  ];
+
+  static const _pastelBorders = [
+    Color(0xFFFDE68A),
+    Color(0xFFA7F3D0),
+    Color(0xFFDDD6FE),
+    Color(0xFFFED7AA),
+    Color(0xFFA5F3FC),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final notes = vm.notes;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Text('📌', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 6),
+                Text(
+                  'Quick Sticky Notes Pinboard',
+                  style: GoogleFonts.lora(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+              onTap: () => showDialog(context: context, builder: (_) => const _QuickNoteDialog()),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.accent.withAlpha(80)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_rounded, size: 14, color: AppColors.accent),
+                    const SizedBox(width: 4),
+                    Text(
+                      'New Note',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (notes.isEmpty)
+          GestureDetector(
+            onTap: () => showDialog(context: context, builder: (_) => const _QuickNoteDialog()),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEF3C7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text('📝', style: TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No sticky notes pinned yet!',
+                          style: GoogleFonts.lora(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF92400E),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tap here to pin formulas, rapid takeaways, and study reminders.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.add_circle_outline_rounded, color: Color(0xFFD97706)),
+                ],
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 165,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: notes.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, i) {
+                final note = notes[i];
+                final bg = _pastelBgs[i % _pastelBgs.length];
+                final border = _pastelBorders[i % _pastelBorders.length];
+
+                return GestureDetector(
+                  onTap: () => _showNoteDetail(context, note, vm),
+                  child: Container(
+                    width: 180,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: border, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(8),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(160),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    note.subjectName.isNotEmpty ? note.subjectName : 'General',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF475569),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Text('📌', style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              note.title,
+                              style: GoogleFonts.lora(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              note.content,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                height: 1.35,
+                                color: const Color(0xFF334155),
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatNoteDate(note.createdAt),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () => vm.deleteNote(note.id),
+                              child: const Padding(
+                                padding: EdgeInsets.all(2),
+                                child: Icon(Icons.delete_outline_rounded, size: 16, color: Color(0xFF94A3B8)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showNoteDetail(BuildContext context, QuickNote note, StudyPlannerViewModel vm) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Text('📌', style: TextStyle(fontSize: 20)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                note.title,
+                style: GoogleFonts.lora(fontWeight: FontWeight.w700, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                note.subjectName.isNotEmpty ? note.subjectName : 'General',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              note.content,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.45),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Created on ${_formatNoteDate(note.createdAt)}',
+              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              vm.deleteNote(note.id);
+            },
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+            label: Text('Delete', style: GoogleFonts.plusJakartaSans(color: Colors.redAccent)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatNoteDate(DateTime dt) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[dt.month - 1]} ${dt.day}';
   }
 }
 

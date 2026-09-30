@@ -16,6 +16,15 @@ class _JourneyScreenState extends State<JourneyScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  String? _selectedHurdleId;
+
+  ExamHurdle _resolveHurdle(JourneyProgress progress) {
+    if (_selectedHurdleId != null) {
+      final match = progress.hurdles.where((h) => h.id == _selectedHurdleId).firstOrNull;
+      if (match != null) return match;
+    }
+    return progress.hurdle;
+  }
 
   @override
   void initState() {
@@ -246,7 +255,10 @@ class _JourneyScreenState extends State<JourneyScreen>
                 ),
               ),
               GestureDetector(
-                onTap: () => _showExamHurdleModal(context, vm, progress),
+                onTap: () {
+                  final activeHurdle = _resolveHurdle(progress);
+                  _showExamHurdleModal(context, vm, progress, targetHurdle: activeHurdle);
+                },
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -264,7 +276,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                           size: 13, color: Color(0xFF047857)),
                       const SizedBox(width: 4),
                       Text(
-                        'Exam: ${progress.hurdle.formattedExamDate} (${progress.hurdle.daysRemainingText})',
+                        'Exam: ${_resolveHurdle(progress).formattedExamDate} (${_resolveHurdle(progress).daysRemainingText})',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -433,264 +445,402 @@ class _JourneyScreenState extends State<JourneyScreen>
 
   Widget _buildExamHurdleCastle(BuildContext context, StudyPlannerViewModel vm,
       JourneyProgress progress, bool isDark) {
-    final hurdle = progress.hurdle;
-    final isUnlocked = hurdle.isUnlocked;
+    final activeHurdle = _resolveHurdle(progress);
+    final isUnlocked = activeHurdle.isUnlocked;
+    final hurdles = progress.sortedHurdles;
 
-    return GestureDetector(
-      onTap: () => _showExamHurdleModal(context, vm, progress),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isUnlocked
-                ? [const Color(0xFFC2410C), const Color(0xFF9A3412)]
-                : [
-                    isDark ? const Color(0xFF283548) : const Color(0xFFEADFD2),
-                    isDark ? const Color(0xFF1E2835) : const Color(0xFFDDD0C0),
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: isUnlocked
-                  ? const Color(0xFFC2410C).withAlpha(100)
-                  : Colors.black.withAlpha(20),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-          border: Border.all(
-            color: isUnlocked
-                ? const Color(0xFFFDBA74)
-                : (isDark ? Colors.white24 : const Color(0xFFD4C5B2)),
-            width: 2,
-          ),
-        ),
-        child: Column(
-          children: [
-            // Floating Hurdle Badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: isUnlocked
-                    ? const Color(0xFFFEF3C7)
-                    : (isDark ? Colors.black38 : Colors.white70),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isUnlocked
-                      ? const Color(0xFFD97706)
-                      : Colors.transparent,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+    return Column(
+      children: [
+        // Multiple Hurdles Header & Quick Switcher
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Text(isUnlocked ? '⚔️' : '🔒',
-                      style: const TextStyle(fontSize: 14)),
+                  const Text('🏰', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 6),
                   Text(
-                    isUnlocked
-                        ? 'FIRST HURDLE UNLOCKED!'
-                        : 'FIRST HURDLE: THE EXAM',
+                    'EXAM HURDLES (${hurdles.length})',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.0,
-                      color: isUnlocked
-                          ? const Color(0xFFB45309)
-                          : (isDark ? Colors.white70 : const Color(0xFF5A524A)),
+                      color: isDark ? Colors.white70 : const Color(0xFFC2410C),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Castle Icon Container
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isUnlocked
-                    ? Colors.white.withAlpha(40)
-                    : Colors.black.withAlpha(20),
-                border: Border.all(
-                  color: isUnlocked ? Colors.white70 : Colors.white24,
-                  width: 2,
+              GestureDetector(
+                onTap: () => _showAddHurdleDialog(context, vm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC2410C).withAlpha(20),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFC2410C).withAlpha(60)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.add_rounded, size: 14, color: Color(0xFFC2410C)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Add Hurdle',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFC2410C),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: Center(
-                child: Text(
-                  isUnlocked ? '🏆' : '🏰',
-                  style: const TextStyle(fontSize: 42),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
 
-            // Title & Countdown
-            Text(
-              hurdle.title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.lora(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: isUnlocked || isDark ? Colors.white : const Color(0xFF2D2620),
-              ),
+        // Horizontal Hurdle Tabs
+        if (hurdles.length > 1)
+          Container(
+            height: 40,
+            margin: const EdgeInsets.only(bottom: 16),
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              itemCount: hurdles.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, idx) {
+                final h = hurdles[idx];
+                final isSelected = h.id == activeHurdle.id;
+                return ChoiceChip(
+                  label: Text('${idx + 1}. ${h.subjectName} (${h.daysRemainingText})'),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedHurdleId = h.id);
+                    }
+                  },
+                  selectedColor: const Color(0xFFC2410C),
+                  labelStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : const Color(0xFF4B433B)),
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: 6),
-            Text(
-              '${hurdle.subjectName} • Target: ${hurdle.targetScore.toInt()}%+',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isUnlocked || isDark ? Colors.white70 : const Color(0xFF6B6258),
-              ),
-            ),
-            const SizedBox(height: 10),
+          ),
 
-            // Prominent Exam Date Badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: isUnlocked
-                    ? Colors.white.withAlpha(35)
-                    : (isDark ? Colors.black45 : Colors.white70),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
+        // Hurdle Castle Card
+        GestureDetector(
+          onTap: () => _showExamHurdleModal(context, vm, progress, targetHurdle: activeHurdle),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isUnlocked
+                    ? [const Color(0xFFC2410C), const Color(0xFF9A3412)]
+                    : [
+                        isDark ? const Color(0xFF283548) : const Color(0xFFEADFD2),
+                        isDark ? const Color(0xFF1E2835) : const Color(0xFFDDD0C0),
+                      ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
                   color: isUnlocked
-                      ? Colors.white60
-                      : (isDark ? Colors.white12 : const Color(0xFFD4C5B2)),
+                      ? const Color(0xFFC2410C).withAlpha(100)
+                      : Colors.black.withAlpha(20),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.event_available_rounded,
-                      size: 15, color: Colors.white),
-                  const SizedBox(width: 6),
-                  Text(
-                    '📅 Exam: ${hurdle.formattedExamDate} • ${hurdle.daysRemainingText}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: isUnlocked || isDark ? Colors.white : const Color(0xFF2D2620),
-                    ),
-                  ),
-                ],
+              ],
+              border: Border.all(
+                color: isUnlocked
+                    ? const Color(0xFFFDBA74)
+                    : (isDark ? Colors.white24 : const Color(0xFFD4C5B2)),
+                width: 2,
               ),
             ),
-            const SizedBox(height: 16),
+            child: Column(
+              children: [
+                // Floating Hurdle Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isUnlocked
+                        ? const Color(0xFFFEF3C7)
+                        : (isDark ? Colors.black38 : Colors.white70),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isUnlocked
+                          ? const Color(0xFFD97706)
+                          : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(isUnlocked ? '⚔️' : '🔒',
+                          style: const TextStyle(fontSize: 14)),
+                      const SizedBox(width: 6),
+                      Text(
+                        isUnlocked
+                            ? 'HURDLE UNLOCKED!'
+                            : 'EXAM HURDLE: ${activeHurdle.subjectName.toUpperCase()}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.0,
+                          color: isUnlocked
+                              ? const Color(0xFFB45309)
+                              : (isDark ? Colors.white70 : const Color(0xFF5A524A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
 
-            // Readiness Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.black.withAlpha(isUnlocked ? 40 : 20),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Castle Icon Container
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isUnlocked
+                        ? Colors.white.withAlpha(40)
+                        : Colors.black.withAlpha(20),
+                    border: Border.all(
+                      color: isUnlocked ? Colors.white70 : Colors.white24,
+                      width: 2,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      isUnlocked ? '🏆' : '🏰',
+                      style: const TextStyle(fontSize: 42),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Title & Countdown
+                Text(
+                  activeHurdle.title,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lora(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isUnlocked || isDark ? Colors.white : const Color(0xFF2D2620),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${activeHurdle.subjectName} • Target: ${activeHurdle.targetScore.toInt()}%+',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isUnlocked || isDark ? Colors.white70 : const Color(0xFF6B6258),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Prominent Exam Date Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isUnlocked
+                        ? Colors.white.withAlpha(35)
+                        : (isDark ? Colors.black45 : Colors.white70),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isUnlocked
+                          ? Colors.white60
+                          : (isDark ? Colors.white12 : const Color(0xFFD4C5B2)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.event_available_rounded,
+                          size: 15, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Text(
+                        '📅 Exam: ${activeHurdle.formattedExamDate} • ${activeHurdle.daysRemainingText}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: isUnlocked || isDark ? Colors.white : const Color(0xFF2D2620),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Readiness Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withAlpha(isUnlocked ? 40 : 20),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Hurdle Readiness',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Hurdle Readiness',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  '${activeHurdle.completedNodes}/${activeHurdle.requiredNodes} Conquered',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: isUnlocked
+                                        ? const Color(0xFFFEF08A)
+                                        : Colors.white70,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              '${hurdle.completedNodes}/${hurdle.requiredNodes} Conquered',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isUnlocked
-                                    ? const Color(0xFFFEF08A)
-                                    : Colors.white70,
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: activeHurdle.readiness,
+                                minHeight: 8,
+                                backgroundColor: Colors.white24,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  isUnlocked
+                                      ? const Color(0xFF22C55E)
+                                      : const Color(0xFFFBBF24),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: LinearProgressIndicator(
-                            value: hurdle.readiness,
-                            minHeight: 8,
-                            backgroundColor: Colors.white24,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isUnlocked
-                                  ? const Color(0xFF22C55E)
-                                  : const Color(0xFFFBBF24),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
+                ),
+                const SizedBox(height: 14),
 
-            // CTA Button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: isUnlocked ? Colors.white : Colors.black26,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: isUnlocked
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                // CTA Button
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isUnlocked ? Colors.white : Colors.black26,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: isUnlocked
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isUnlocked
+                            ? Icons.play_arrow_rounded
+                            : Icons.info_outline_rounded,
+                        size: 18,
+                        color: isUnlocked
+                            ? const Color(0xFFC2410C)
+                            : (isDark ? Colors.white70 : const Color(0xFF6B6258)),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isUnlocked ? 'Face the Exam Challenge' : 'Inspect Hurdle Details',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isUnlocked
+                              ? const Color(0xFFC2410C)
+                              : (isDark ? Colors.white70 : const Color(0xFF6B6258)),
                         ),
-                      ]
-                    : [],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    isUnlocked
-                        ? Icons.play_arrow_rounded
-                        : Icons.info_outline_rounded,
-                    size: 18,
-                    color: isUnlocked
-                        ? const Color(0xFFC2410C)
-                        : (isDark ? Colors.white70 : const Color(0xFF6B6258)),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    isUnlocked ? 'Face the Exam Challenge' : 'Inspect Hurdle Details',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: isUnlocked
-                          ? const Color(0xFFC2410C)
-                          : (isDark ? Colors.white70 : const Color(0xFF6B6258)),
+                ),
+                const SizedBox(height: 10),
+
+                // Action Buttons: Edit Hurdle & Focus Timer
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showEditHurdleDialog(context, vm, activeHurdle),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isUnlocked || isDark ? Colors.white : const Color(0xFF2D2620),
+                          side: BorderSide(
+                            color: (isUnlocked || isDark ? Colors.white : Colors.black).withAlpha(60),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.edit_calendar_rounded, size: 15),
+                        label: Text(
+                          'Edit Hurdle',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          vm.setTabIndex(2);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isUnlocked || isDark ? Colors.white : const Color(0xFF2D2620),
+                          side: BorderSide(
+                            color: (isUnlocked || isDark ? Colors.white : Colors.black).withAlpha(60),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.timer_outlined, size: 15),
+                        label: Text(
+                          'Focus Timer',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -920,8 +1070,9 @@ class _JourneyScreenState extends State<JourneyScreen>
   }
 
   void _showExamHurdleModal(
-      BuildContext context, StudyPlannerViewModel vm, JourneyProgress progress) {
-    final hurdle = progress.hurdle;
+      BuildContext context, StudyPlannerViewModel vm, JourneyProgress progress,
+      {ExamHurdle? targetHurdle}) {
+    final hurdle = targetHurdle ?? _resolveHurdle(progress);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
@@ -1065,7 +1216,13 @@ class _JourneyScreenState extends State<JourneyScreen>
                           lastDate: DateTime.now().add(const Duration(days: 730)),
                         );
                         if (picked != null) {
-                          await vm.updateExamHurdle(examDate: picked);
+                          await vm.updateExamHurdleById(
+                            hurdleId: hurdle.id,
+                            examDate: picked,
+                          );
+                          if (hurdle.id == progress.hurdle.id) {
+                            await vm.updateExamHurdle(examDate: picked);
+                          }
                           if (ctx.mounted) Navigator.pop(ctx);
                         }
                       },
@@ -1166,6 +1323,364 @@ class _JourneyScreenState extends State<JourneyScreen>
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showAddHurdleDialog(BuildContext context, StudyPlannerViewModel vm) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subjects = vm.profile?.subjects ?? [];
+    String selectedSubject = subjects.isNotEmpty ? subjects.first.name : 'Physics';
+    final subjectCtrl = TextEditingController(text: selectedSubject);
+    final titleCtrl = TextEditingController(text: '$selectedSubject Final Exam Hurdle');
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 7));
+    double targetScore = 85.0;
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            return AlertDialog(
+              backgroundColor: isDark ? const Color(0xFF1E2835) : Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  const Text('🏰', style: TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Add Exam Hurdle',
+                    style: GoogleFonts.lora(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF2D2620),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Subject',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    if (subjects.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: subjects.map((s) {
+                          final isSel = selectedSubject.toLowerCase() == s.name.toLowerCase();
+                          return ChoiceChip(
+                            label: Text(s.name),
+                            selected: isSel,
+                            onSelected: (val) {
+                              if (val) {
+                                setDlgState(() {
+                                  selectedSubject = s.name;
+                                  subjectCtrl.text = s.name;
+                                  titleCtrl.text = '${s.name} Exam Hurdle';
+                                });
+                              }
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: subjectCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Or custom subject',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        isDense: true,
+                      ),
+                      onChanged: (val) {
+                        selectedSubject = val;
+                        titleCtrl.text = '$val Exam Hurdle';
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Hurdle Title',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: titleCtrl,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Exam Date',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                          lastDate: DateTime.now().add(const Duration(days: 730)),
+                        );
+                        if (picked != null) {
+                          setDlgState(() => selectedDate = picked);
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                      label: Text(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Target Score: ${targetScore.toInt()}%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: targetScore,
+                      min: 50,
+                      max: 100,
+                      divisions: 10,
+                      label: '${targetScore.toInt()}%',
+                      activeColor: const Color(0xFFC2410C),
+                      onChanged: (val) => setDlgState(() => targetScore = val),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dlgCtx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final subj = subjectCtrl.text.trim().isEmpty ? 'General' : subjectCtrl.text.trim();
+                    final title = titleCtrl.text.trim().isEmpty ? '$subj Hurdle' : titleCtrl.text.trim();
+                    final newHurdle = ExamHurdle(
+                      id: 'hurdle_${DateTime.now().millisecondsSinceEpoch}',
+                      title: title,
+                      subjectName: subj,
+                      examDate: selectedDate,
+                      targetScore: targetScore,
+                      requiredNodes: 5,
+                      completedNodes: 0,
+                    );
+                    await vm.addExamHurdle(newHurdle);
+                    if (dlgCtx.mounted) {
+                      Navigator.pop(dlgCtx);
+                      setState(() => _selectedHurdleId = newHurdle.id);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC2410C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Add Hurdle'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditHurdleDialog(BuildContext context, StudyPlannerViewModel vm, ExamHurdle hurdle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subjectCtrl = TextEditingController(text: hurdle.subjectName);
+    final titleCtrl = TextEditingController(text: hurdle.title);
+    DateTime selectedDate = hurdle.examDate;
+    double targetScore = hurdle.targetScore;
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            return AlertDialog(
+              backgroundColor: isDark ? const Color(0xFF1E2835) : Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  const Text('✏️', style: TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Edit Exam Hurdle',
+                    style: GoogleFonts.lora(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF2D2620),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Subject Name',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: subjectCtrl,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Hurdle Title',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: titleCtrl,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Exam Date',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                          lastDate: DateTime.now().add(const Duration(days: 730)),
+                        );
+                        if (picked != null) {
+                          setDlgState(() => selectedDate = picked);
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                      label: Text(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Target Score: ${targetScore.toInt()}%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white70 : const Color(0xFF5A524A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: targetScore,
+                      min: 50,
+                      max: 100,
+                      divisions: 10,
+                      label: '${targetScore.toInt()}%',
+                      activeColor: const Color(0xFFC2410C),
+                      onChanged: (val) => setDlgState(() => targetScore = val),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                if (vm.journeyProgress.hurdles.length > 1)
+                  TextButton(
+                    onPressed: () async {
+                      await vm.deleteExamHurdle(hurdle.id);
+                      if (dlgCtx.mounted) {
+                        Navigator.pop(dlgCtx);
+                        setState(() => _selectedHurdleId = null);
+                      }
+                    },
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: const Text('Delete'),
+                  ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dlgCtx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final subj = subjectCtrl.text.trim().isEmpty ? hurdle.subjectName : subjectCtrl.text.trim();
+                    final title = titleCtrl.text.trim().isEmpty ? hurdle.title : titleCtrl.text.trim();
+                    await vm.updateExamHurdleById(
+                      hurdleId: hurdle.id,
+                      examDate: selectedDate,
+                      title: title,
+                      subjectName: subj,
+                      targetScore: targetScore,
+                    );
+                    if (dlgCtx.mounted) {
+                      Navigator.pop(dlgCtx);
+                      setState(() {});
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC2410C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

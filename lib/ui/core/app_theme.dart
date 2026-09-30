@@ -34,12 +34,20 @@ class AppColors {
     Color(0xFF4D7C0F), // Olive Moss
   ];
 
-  // Dark theme: Roasted Espresso & Warm Charcoal
-  static const darkBackground = Color(0xFF161514);
-  static const darkCard = Color(0xFF22201E);
-  static const darkSurface = Color(0xFF2D2925);
-  static const darkTextPrimary = Color(0xFFF3ECE4);
-  static const darkTextSecondary = Color(0xFFA69E96);
+  // Realistic Dark theme: OLED Midnight Black, Electric Neon Blue, and Deep Royal Purple
+  static const darkBackground = Color(0xFF030712); // Pure OLED Midnight Black
+  static const darkCard = Color(0xFF0F172A); // Deep Slate / Midnight Black
+  static const darkSurface = Color(0xFF1E1B4B); // Deep Royal Indigo / Purple Surface
+  static const darkSurfaceVariant = Color(0xFF1E293B);
+  static const darkTextPrimary = Color(0xFFF8FAFC); // Crisp Bright White
+  static const darkTextSecondary = Color(0xFF94A3B8); // Muted Cool Slate
+  static const darkBorder = Color(0xFF1E293B); // Dark Slate Border
+  static const darkBorderAccent = Color(0xFF38BDF8); // Electric Blue Accent
+
+  // Dark Theme Accents
+  static const darkPrimary = Color(0xFF38BDF8); // Electric Sky Blue
+  static const darkSecondary = Color(0xFF8B5CF6); // Royal Violet Purple
+  static const darkAccent = Color(0xFFA855F7); // Electric Neon Purple
 }
 
 class AppTheme {
@@ -134,15 +142,16 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.dark,
-      ).copyWith(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        tertiary: AppColors.accent,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.darkPrimary,
+        secondary: AppColors.darkSecondary,
+        tertiary: AppColors.darkAccent,
         surface: AppColors.darkCard,
         surfaceContainerHighest: AppColors.darkSurface,
+        onPrimary: Color(0xFF030712),
+        onSecondary: Colors.white,
+        onSurface: AppColors.darkTextPrimary,
       ),
       scaffoldBackgroundColor: AppColors.darkBackground,
       appBarTheme: AppBarTheme(
@@ -161,13 +170,13 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: AppColors.borderDark, width: 1.2),
+          side: const BorderSide(color: Color(0xFF1E293B), width: 1.2),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.darkPrimary,
+          foregroundColor: const Color(0xFF030712),
           elevation: 2,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
           shape: RoundedRectangleBorder(
@@ -179,16 +188,38 @@ class AppTheme {
           ),
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF0B132B),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF1E293B)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF1E293B), width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.darkPrimary, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.darkTextSecondary,
+          fontSize: 14,
+        ),
+      ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkCard,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.white54,
+        backgroundColor: Color(0xFF090D16),
+        selectedItemColor: AppColors.darkPrimary,
+        unselectedItemColor: Color(0xFF64748B),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
+        elevation: 8,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.darkPrimary,
+        foregroundColor: const Color(0xFF030712),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );

@@ -226,6 +226,9 @@ class PomodoroViewModel extends ChangeNotifier {
 
 class StudyPlannerViewModel extends ChangeNotifier {
   StudyPlannerViewModel({required this._repository}) {
+    if (_supabase.isAuthenticated && _supabase.currentUser != null) {
+      _repository.setUserId(_supabase.currentUser!.id);
+    }
     loadData();
   }
 
@@ -294,9 +297,34 @@ class StudyPlannerViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> onUserAuthenticated(String userId) async {
+    _repository.setUserId(userId);
+    _profile = null;
+    _sessions = [];
+    _tasks = [];
+    _notes = [];
+    _journeyProgress = null;
+    await loadData();
+  }
+
+  Future<void> onSignOut() async {
+    await _supabase.signOut();
+    _repository.setUserId(null);
+    _profile = null;
+    _sessions = [];
+    _tasks = [];
+    _notes = [];
+    _journeyProgress = null;
+    await loadData();
+  }
+
   Future<void> loadData() async {
     _isLoading = true;
     notifyListeners();
+
+    if (_supabase.isAuthenticated && _supabase.currentUser != null) {
+      _repository.setUserId(_supabase.currentUser!.id);
+    }
 
     _profile = await _repository.getProfile();
     _sessions = await _repository.getSessions();
@@ -559,6 +587,9 @@ class StudyPlannerViewModel extends ChangeNotifier {
       customExamDate: examDate,
       customTitle: hurdleTitle,
       existingCompletedNodes: _journeyProgress?.nodes,
+      existingXp: _journeyProgress?.totalXp,
+      existingStreak: _journeyProgress?.currentStreak,
+      existingHurdles: _journeyProgress?.hurdles,
     );
     await saveJourneyProgress(generated);
   }
@@ -639,7 +670,68 @@ class StudyPlannerViewModel extends ChangeNotifier {
     await saveJourneyProgress(updatedProgress);
   }
 
-  /// Update the Hurdle Exam Date, title, and target score
+  /// Add a new exam hurdle to the quest
+  Future<void> addExamHurdle(ExamHurdle hurdle) async {
+    final current = journeyProgress;
+    final updatedHurdles = [...current.hurdles, hurdle];
+    final updatedProgress = current.copyWith(hurdles: updatedHurdles);
+    await saveJourneyProgress(updatedProgress);
+
+    // Also update or match the subject's examDate
+    if (_profile != null && _profile!.subjects.isNotEmpty) {
+      final updatedSubjects = _profile!.subjects.map((s) {
+        if (s.name.toLowerCase() == hurdle.subjectName.toLowerCase()) {
+          return s.copyWith(examDate: hurdle.examDate);
+        }
+        return s;
+      }).toList();
+      await saveProfile(_profile!.copyWith(subjects: updatedSubjects));
+    }
+  }
+
+  /// Delete an exam hurdle
+  Future<void> deleteExamHurdle(String hurdleId) async {
+    final current = journeyProgress;
+    final updatedHurdles = current.hurdles.where((h) => h.id != hurdleId).toList();
+    final updatedProgress = current.copyWith(hurdles: updatedHurdles);
+    await saveJourneyProgress(updatedProgress);
+  }
+
+  /// Update an existing exam hurdle by ID
+  Future<void> updateExamHurdleById({
+    required String hurdleId,
+    required DateTime examDate,
+    String? title,
+    double? targetScore,
+    String? subjectName,
+  }) async {
+    final current = journeyProgress;
+    final updatedHurdles = current.hurdles.map((h) {
+      if (h.id == hurdleId) {
+        return h.copyWith(
+          examDate: examDate,
+          title: title ?? h.title,
+          targetScore: targetScore ?? h.targetScore,
+          subjectName: subjectName ?? h.subjectName,
+        );
+      }
+      return h;
+    }).toList();
+    final updatedProgress = current.copyWith(hurdles: updatedHurdles);
+    await saveJourneyProgress(updatedProgress);
+
+    if (_profile != null && _profile!.subjects.isNotEmpty && subjectName != null) {
+      final updatedSubjects = _profile!.subjects.map((s) {
+        if (s.name.toLowerCase() == subjectName.toLowerCase()) {
+          return s.copyWith(examDate: examDate);
+        }
+        return s;
+      }).toList();
+      await saveProfile(_profile!.copyWith(subjects: updatedSubjects));
+    }
+  }
+
+  /// Update the active Hurdle Exam Date, title, and target score
   Future<void> updateExamHurdle({
     required DateTime examDate,
     String? title,

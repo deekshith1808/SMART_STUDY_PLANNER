@@ -1062,6 +1062,38 @@ class _SubjectFormState extends State<_SubjectForm> {
               style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600),
               decoration: const InputDecoration(labelText: 'Subject Name', prefixIcon: Icon(Icons.book_rounded, color: AppColors.primary)),
             ),
+            if (widget.subject == null) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Recommended Presets (Tap to use):',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Builder(
+                builder: (context) {
+                  final edType = context.read<StudyPlannerViewModel>().profile?.educationType ?? 'college';
+                  final presets = edType == 'school'
+                      ? ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Computer Science']
+                      : ['Data Structures', 'Operating Systems', 'DBMS', 'Computer Networks', 'Engineering Maths', 'Software Engineering'];
+                  return Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: presets.map((p) => ActionChip(
+                      label: Text(p, style: const TextStyle(fontSize: 11)),
+                      onPressed: () {
+                        setState(() {
+                          _nameCtrl.text = p;
+                        });
+                      },
+                    )).toList(),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 18),
             Text('Palette Tag', style: GoogleFonts.lora(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             const SizedBox(height: 10),
@@ -1096,7 +1128,22 @@ class _SubjectFormState extends State<_SubjectForm> {
             const SizedBox(height: 20),
             _buildSlider('Current Marks', _marks, 0, 100, '%', (v) => setState(() => _marks = v), AppColors.primary),
             _buildSlider('Target Goal', _targetMarks, 0, 100, '%', (v) => setState(() => _targetMarks = v), AppColors.secondary),
-            _buildSlider('Study Time Logged', _studyHours.toDouble(), 0, 500, 'h', (v) => setState(() => _studyHours = v.round()), AppColors.accent),
+            _buildSlider('Study Time Logged', _studyHours.toDouble(), 0, 60, 'h', (v) => setState(() => _studyHours = v.round()), AppColors.accent),
+            Row(
+              children: [
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => setState(() => _studyHours = (_studyHours + 1).clamp(0, 60)),
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('+1h', style: TextStyle(fontSize: 11)),
+                ),
+                TextButton.icon(
+                  onPressed: () => setState(() => _studyHours = (_studyHours + 5).clamp(0, 60)),
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('+5h', style: TextStyle(fontSize: 11)),
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             Text('Priority Rating', style: GoogleFonts.lora(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             const SizedBox(height: 8),

@@ -9,6 +9,9 @@ class StudyRepository {
 
   final StorageService _storage;
 
+  void setUserId(String? userId) => _storage.setUserId(userId);
+  Future<void> clearUserCache([String? userId]) => _storage.clearUserCache(userId);
+
   // Profile
   Future<UserProfile?> getProfile() => _storage.loadProfile();
   Future<void> saveProfile(UserProfile profile) => _storage.saveProfile(profile);
