@@ -51,7 +51,7 @@ void main() {
         targetMarks: 95.0,
         studyHours: 10,
         color: '#3B82F6',
-        priority: 5,
+        priority: SubjectPriority.high,
         topics: ['Mechanics'],
       );
 

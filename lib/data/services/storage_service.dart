@@ -1,8 +1,9 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/study_session.dart';
 import '../../domain/models/learning_journey.dart';
+import '../../domain/models/focus_shield.dart';
 
 class StorageService {
   static const _profileKey = 'user_profile';
@@ -11,6 +12,7 @@ class StorageService {
   static const _notesKey = 'quick_notes';
   static const _pomodoroSettingsKey = 'pomodoro_settings';
   static const _journeyKey = 'learning_journey_progress';
+  static const _focusShieldKey = 'focus_shield_config';
 
   String? _currentUserId;
 
@@ -110,6 +112,24 @@ class StorageService {
   Future<void> saveJourneyProgress(JourneyProgress progress) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key(_journeyKey), jsonEncode(progress.toJson()));
+  }
+
+  // Focus Shield & Social Media Blocker
+  Future<FocusShieldConfig> loadFocusShieldConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_focusShieldKey);
+    if (jsonStr == null) return FocusShieldConfig.defaultConfig();
+    try {
+      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+      return FocusShieldConfig.fromJson(map);
+    } catch (_) {
+      return FocusShieldConfig.defaultConfig();
+    }
+  }
+
+  Future<void> saveFocusShieldConfig(FocusShieldConfig config) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_focusShieldKey, jsonEncode(config.toJson()));
   }
 
   Future<void> clearAll() async {

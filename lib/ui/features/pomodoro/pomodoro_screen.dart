@@ -7,6 +7,8 @@ import 'package:smart_study_planner/ui/features/home/study_planner_view_model.da
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 import 'package:smart_study_planner/domain/models/learning_journey.dart';
+import 'package:smart_study_planner/ui/features/pomodoro/focus_shield_sheet.dart';
+import 'package:smart_study_planner/ui/features/pomodoro/focus_sanctuary_dialog.dart';
 
 Color _colorFromHex(String hexColor) {
   var hex = hexColor.replaceAll('#', '');
@@ -68,6 +70,45 @@ class PomodoroScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          // Sanctuary Fullscreen View Button
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2835) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isDark ? Colors.white12 : AppColors.borderLight),
+            ),
+            child: IconButton(
+              tooltip: 'Fullscreen Focus Sanctuary',
+              icon: const Icon(Icons.fullscreen_rounded, color: AppColors.primary, size: 22),
+              onPressed: () => FocusSanctuaryDialog.show(context, vm),
+            ),
+          ),
+          // Shield Settings Button
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: vm.isShieldActive
+                  ? const Color(0xFFFEF2F2)
+                  : (isDark ? const Color(0xFF1E2835) : Colors.white),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: vm.isShieldActive
+                    ? const Color(0xFFFECACA)
+                    : (isDark ? Colors.white12 : AppColors.borderLight),
+              ),
+            ),
+            child: IconButton(
+              tooltip: 'Social Media Shield',
+              icon: Icon(
+                Icons.shield_rounded,
+                color: vm.isShieldActive ? const Color(0xFFDC2626) : (isDark ? Colors.white70 : AppColors.textPrimary),
+                size: 20,
+              ),
+              onPressed: () => FocusShieldSheet.show(context, vm),
+            ),
+          ),
+          // Timer durations settings
           Container(
             margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
@@ -94,6 +135,10 @@ class PomodoroScreen extends StatelessWidget {
           children: [
             // Phase selector (Focus / Short Rest / Long Rest)
             _PhaseSelector(vm: vm, accentColor: accentColor),
+            const SizedBox(height: 16),
+
+            // Focus Shield Status Banner
+            _FocusShieldBanner(vm: vm),
             const SizedBox(height: 20),
 
             // Subject selector strip & dropdown
@@ -154,6 +199,114 @@ class PomodoroScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => _PomodoroSettings(vm: vm),
+    );
+  }
+}
+
+class _FocusShieldBanner extends StatelessWidget {
+  final PomodoroViewModel vm;
+  const _FocusShieldBanner({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFocusPhase = vm.phase == PomodoroPhase.work;
+    final isShieldActive = vm.isShieldActive;
+    final isShieldEnabled = vm.shieldConfig.isShieldEnabled;
+    final enabledAppsCount = vm.shieldConfig.blockedApps.where((a) => a.isEnabled).length;
+
+    Color bg;
+    Color border;
+    Color textColor;
+    String statusTitle;
+    String statusSubtitle;
+    IconData icon;
+
+    if (!isShieldEnabled) {
+      bg = const Color(0xFFF1F5F9);
+      border = const Color(0xFFCBD5E1);
+      textColor = const Color(0xFF64748B);
+      statusTitle = 'Social Media Shield Disabled';
+      statusSubtitle = 'Tap to enable automatic app blocking during study';
+      icon = Icons.shield_outlined;
+    } else if (isShieldActive) {
+      bg = const Color(0xFFFEF2F2);
+      border = const Color(0xFFFCA5A5);
+      textColor = const Color(0xFF991B1B);
+      statusTitle = 'Social Media Shield ACTIVE 🛡️';
+      statusSubtitle = '$enabledAppsCount apps & distractions blocked while focus timer runs';
+      icon = Icons.shield_rounded;
+    } else if (isFocusPhase && !vm.isRunning) {
+      bg = const Color(0xFFFFFBEB);
+      border = const Color(0xFFFDE68A);
+      textColor = const Color(0xFF92400E);
+      statusTitle = 'Shield Armed & Ready 🛡️';
+      statusSubtitle = 'Press Play to lock in focus and block social media';
+      icon = Icons.shield_moon_rounded;
+    } else {
+      bg = const Color(0xFFECFDF5);
+      border = const Color(0xFFA7F3D0);
+      textColor = const Color(0xFF065F46);
+      statusTitle = 'Shield Paused • Break Time 🌿';
+      statusSubtitle = 'Distraction block temporarily suspended for rest';
+      icon = Icons.coffee_rounded;
+    }
+
+    return GestureDetector(
+      onTap: () => FocusShieldSheet.show(context, vm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(4),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: border),
+              ),
+              child: Icon(icon, color: textColor, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    statusTitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  Text(
+                    statusSubtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: textColor.withAlpha(200),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: textColor, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -591,48 +744,64 @@ class _ControlButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        // Reset
-        _CircleButton(
-          icon: Icons.refresh_rounded,
-          onTap: vm.reset,
-          color: AppColors.textSecondary,
-          size: 48,
-        ),
-        const SizedBox(width: 20),
-        // Play / Pause (large warm button)
-        GestureDetector(
-          onTap: vm.isRunning ? vm.pause : vm.start,
-          child: Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              color: accentColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: accentColor.withAlpha(100),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Reset
+            _CircleButton(
+              icon: Icons.refresh_rounded,
+              onTap: vm.reset,
+              color: AppColors.textSecondary,
+              size: 48,
+            ),
+            const SizedBox(width: 20),
+            // Play / Pause (large warm button)
+            GestureDetector(
+              onTap: vm.isRunning ? vm.pause : vm.start,
+              child: Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withAlpha(100),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              ],
+                child: Icon(
+                  vm.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 38,
+                ),
+              ),
             ),
-            child: Icon(
-              vm.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 38,
+            const SizedBox(width: 20),
+            // Skip
+            _CircleButton(
+              icon: Icons.skip_next_rounded,
+              onTap: vm.skipPhase,
+              color: AppColors.textSecondary,
+              size: 48,
             ),
-          ),
+          ],
         ),
-        const SizedBox(width: 20),
-        // Skip
-        _CircleButton(
-          icon: Icons.skip_next_rounded,
-          onTap: vm.skipPhase,
-          color: AppColors.textSecondary,
-          size: 48,
+        const SizedBox(height: 14),
+        // Sanctuary View Shortcut Chip
+        ActionChip(
+          avatar: const Icon(Icons.fullscreen_rounded, size: 18, color: AppColors.primary),
+          label: Text(
+            'Sanctuary Mode',
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+          ),
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: AppColors.borderLight),
+          onPressed: () => FocusSanctuaryDialog.show(context, vm),
         ),
       ],
     );
@@ -1828,9 +1997,22 @@ class _PomodoroSettingsState extends State<_PomodoroSettings> {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            'Timer Durations (Minutes)',
-            style: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Timer Durations (Minutes)',
+                style: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  FocusShieldSheet.show(context, widget.vm);
+                },
+                icon: const Icon(Icons.shield_rounded, size: 16, color: Color(0xFFDC2626)),
+                label: const Text('Shield', style: TextStyle(color: Color(0xFFDC2626))),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           _SettingSlider(

@@ -1590,9 +1590,15 @@ class _SubjectMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(subject.color);
+    final pColor = subject.priority == SubjectPriority.high
+        ? const Color(0xFFC2410C)
+        : subject.priority == SubjectPriority.medium
+            ? const Color(0xFFD97706)
+            : const Color(0xFF047857);
+
     return Container(
-      width: 138,
-      padding: const EdgeInsets.all(14),
+      width: 142,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -1609,14 +1615,34 @@ class _SubjectMiniCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withAlpha(25),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.auto_stories_rounded, color: color, size: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.auto_stories_rounded, color: color, size: 16),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: pColor.withAlpha(20),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  subject.priority == SubjectPriority.high
+                      ? '🔥 High'
+                      : subject.priority == SubjectPriority.medium
+                          ? '⚡ Med'
+                          : '🌱 Low',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w700, color: pColor),
+                ),
+              ),
+            ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1637,7 +1663,7 @@ class _SubjectMiniCard extends StatelessWidget {
                   Text(
                     '${subject.marks.toStringAsFixed(0)}%',
                     style: GoogleFonts.lora(
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: color,
                     ),
@@ -1646,7 +1672,7 @@ class _SubjectMiniCard extends StatelessWidget {
                   Text(
                     '/ ${subject.targetMarks.toStringAsFixed(0)}%',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
+                      fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
                   ),
