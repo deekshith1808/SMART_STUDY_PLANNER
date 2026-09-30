@@ -1,17 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_study_planner/data/services/supabase_service.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
 
 void main() {
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('Supabase Service & Config Tests', () {
-    test('SupabaseConfig correctly detects default placeholder credentials', () {
-      expect(SupabaseConfig.isConfigured, isFalse);
-      expect(SupabaseService.client, isNull);
-      expect(SupabaseService.isInitialized, isFalse);
+    test('SupabaseConfig correctly configures credentials and strips /rest/v1 paths', () {
+      expect(SupabaseConfig.isConfigured, isTrue);
+      expect(SupabaseConfig.supabaseUrl, equals('https://yzzfrqbfhcfjfmcpaekx.supabase.co'));
+      expect(SupabaseConfig.supabaseAnonKey, isNotEmpty);
     });
 
-    test('SupabaseService.initialize() safely handles unconfigured mode without crashing', () async {
-      // Must complete without error
+    test('SupabaseService.initialize() executes safely', () async {
+      // Must complete without unhandled crash
       await expectLater(SupabaseService.initialize(), completes);
     });
 
