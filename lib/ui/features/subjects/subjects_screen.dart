@@ -6,12 +6,15 @@ import 'package:smart_study_planner/ui/core/app_theme.dart';
 import 'package:smart_study_planner/ui/features/home/study_planner_view_model.dart';
 import 'package:smart_study_planner/domain/models/user_profile.dart';
 import 'package:smart_study_planner/domain/models/study_session.dart';
+import 'package:smart_study_planner/domain/utils/subject_validator.dart';
 
 class SubjectsScreen extends StatelessWidget {
   const SubjectsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: context.watch<StudyPlannerViewModel>(),
       builder: (context, _) {
@@ -19,11 +22,16 @@ class SubjectsScreen extends StatelessWidget {
         final subjects = vm.profile?.subjects ?? [];
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: isDark ? const Color(0xFF030712) : AppColors.background,
           appBar: AppBar(
+            backgroundColor: isDark ? const Color(0xFF030712) : AppColors.background,
+            elevation: 0,
             title: Text(
               'Subjects & Marks 📚',
-              style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: GoogleFonts.lora(
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
             ),
             actions: [
               Container(
@@ -64,9 +72,11 @@ class SubjectsScreen extends StatelessWidget {
   }
 
   void _showAddSubjectDialog(BuildContext context, StudyPlannerViewModel vm) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _SubjectForm(
         onSave: (subject) => vm.addSubject(subject),
@@ -76,9 +86,11 @@ class SubjectsScreen extends StatelessWidget {
   }
 
   void _showEditSubjectDialog(BuildContext context, StudyPlannerViewModel vm, Subject subject) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _SubjectForm(
         subject: subject,
@@ -129,17 +141,11 @@ class _SubjectCardState extends State<_SubjectCard> {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2835) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(90), width: 1.3),
-        boxShadow: [
-          BoxShadow(
-            color: color.withAlpha(15),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+      decoration: AppColors.glassCardDecoration(
+        isDark: isDark,
+        borderRadius: 20,
+        borderColor: isDark ? color.withAlpha(120) : color.withAlpha(90),
+        glowColor: color.withAlpha(isDark ? 30 : 15),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1323,11 +1329,22 @@ class _SubjectFormState extends State<_SubjectForm> {
   }
 
   void _save() {
-    if (_nameCtrl.text.trim().isEmpty) return;
+    final rawName = _nameCtrl.text.trim();
+    if (rawName.isEmpty) return;
+
+    if (!AcademicSubjectValidator.isAcademicSubject(rawName)) {
+      _showAcademicWarningDialog(rawName);
+      return;
+    }
+
+    _commitSave(rawName);
+  }
+
+  void _commitSave(String subjectName) {
     final color = AppColors.subjectColors[_selectedColorIndex % AppColors.subjectColors.length];
     final subject = Subject(
       id: widget.subject?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameCtrl.text.trim(),
+      name: subjectName,
       marks: _marks,
       targetMarks: _targetMarks,
       studyHours: _studyHours,
@@ -1338,6 +1355,71 @@ class _SubjectFormState extends State<_SubjectForm> {
     );
     widget.onSave(subject);
     Navigator.pop(context);
+  }
+
+  void _showAcademicWarningDialog(String name) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isDark ? const BorderSide(color: Color(0xFF38BDF8), width: 1.2) : BorderSide.none,
+        ),
+        title: Row(
+          children: [
+            const Text('⚠️', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Non-Academic Topic Warning',
+                style: GoogleFonts.lora(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '"$name" does not appear to be a recognized academic subject or educational course. Non-educational entries can dilute your syllabus analytics and learning journey.\n\nWould you like to continue anyway?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            height: 1.45,
+            color: isDark ? Colors.white70 : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(
+              'Change Name',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.darkPrimary : AppColors.primary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dlgCtx);
+              _commitSave(name);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC2410C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(
+              'Continue Anyway',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -12,6 +12,8 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: context.watch<StudyPlannerViewModel>(),
       builder: (context, _) {
@@ -21,31 +23,43 @@ class SettingsScreen extends StatelessWidget {
           expand: false,
           initialChildSize: 0.78,
           maxChildSize: 0.92,
-          builder: (_, ctrl) => Column(
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(top: 14, bottom: 8),
-                decoration: BoxDecoration(color: const Color(0xFFD6CBC0), borderRadius: BorderRadius.circular(2)),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: ctrl,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Student Preferences ⚙️',
-                          style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    // Profile section
-                    _SettingsSection(
-                      title: 'Student Identity',
+          builder: (_, ctrl) => Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 14, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFD6CBC0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: ctrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Student Preferences ⚙️',
+                            style: GoogleFonts.lora(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      // Profile section
+                      _SettingsSection(
+                        title: 'Student Identity',
                       children: [
                         _SettingsTile(
                           icon: Icons.person_outline_rounded,
@@ -210,10 +224,11 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   void _showEditNameDialog(BuildContext context, StudyPlannerViewModel vm) {
     final controller = TextEditingController(text: vm.profile?.name ?? '');
@@ -418,6 +433,8 @@ class _SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -426,24 +443,31 @@ class _SettingsSection extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             letterSpacing: 1.1,
           ),
         ),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.borderLight, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(4),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          decoration: isDark
+              ? AppColors.glassCardDecoration(
+                  isDark: true,
+                  borderColor: const Color(0x338B5CF6),
+                  glowColor: const Color(0x188B5CF6),
+                  borderRadius: 18,
+                )
+              : BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.borderLight, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
           child: Column(children: children),
         ),
       ],
@@ -470,7 +494,9 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = iconColor ?? AppColors.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = iconColor ?? (isDark ? AppColors.darkPrimary : AppColors.primary);
+
     return ListTile(
       onTap: onTap,
       leading: Container(
@@ -484,13 +510,20 @@ class _SettingsTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        ),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+      trailing: trailing ?? Icon(Icons.chevron_right_rounded, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary, size: 20),
     );
   }
 }
@@ -512,27 +545,37 @@ class _SettingsToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDark ? AppColors.darkPrimary : AppColors.primary;
+
     return ListTile(
       leading: Container(
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: AppColors.primary.withAlpha(25),
+          color: color.withAlpha(25),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
+        child: Icon(icon, color: color, size: 20),
       ),
       title: Text(
         title,
-        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        ),
       ),
       trailing: Switch(
-        activeThumbColor: AppColors.primary,
-        activeTrackColor: AppColors.primary.withAlpha(50),
+        activeThumbColor: isDark ? const Color(0xFF38BDF8) : AppColors.primary,
+        activeTrackColor: isDark ? const Color(0x6038BDF8) : AppColors.primary.withAlpha(50),
         value: value,
         onChanged: onChanged,
       ),

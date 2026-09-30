@@ -43,12 +43,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ? <ScheduledTask>[]
             : events[DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day)] ?? [];
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: isDark ? const Color(0xFF030712) : AppColors.background,
           appBar: AppBar(
+            backgroundColor: isDark ? const Color(0xFF030712) : AppColors.background,
+            elevation: 0,
             title: Text(
               'Study Timetable 🗓️',
-              style: GoogleFonts.lora(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: GoogleFonts.lora(
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
             ),
             actions: [
               Container(
@@ -76,17 +83,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               // Calendar Card
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.borderLight, width: 1.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(6),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                decoration: AppColors.glassCardDecoration(
+                  isDark: isDark,
+                  borderRadius: 20,
+                  borderColor: isDark ? AppColors.darkBorderAccent.withAlpha(50) : null,
+                  glowColor: isDark ? AppColors.darkSecondary.withAlpha(20) : null,
                 ),
                 child: TableCalendar(
                   firstDay: DateTime.utc(2020, 1, 1),
@@ -115,11 +116,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       shape: BoxShape.circle,
                     ),
                     todayTextStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                    defaultTextStyle: TextStyle(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
                     markerDecoration: const BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),
-                    weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
+                    weekendTextStyle: TextStyle(
+                      color: isDark ? Colors.white60 : AppColors.textSecondary,
+                    ),
                   ),
                   headerStyle: HeaderStyle(
                     formatButtonDecoration: BoxDecoration(
@@ -135,7 +141,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     titleTextStyle: GoogleFonts.lora(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -216,6 +222,7 @@ class _ScheduleTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final priorityColor = task.priority == 'high'
         ? AppColors.error
         : task.priority == 'medium'
@@ -224,17 +231,10 @@ class _ScheduleTaskCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(5),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      decoration: AppColors.glassCardDecoration(
+        isDark: isDark,
+        borderRadius: 18,
+        borderColor: isDark ? AppColors.darkBorderAccent.withAlpha(40) : null,
       ),
       child: Row(
         children: [
@@ -247,7 +247,9 @@ class _ScheduleTaskCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: task.isCompleted ? AppColors.primary : Colors.transparent,
                 border: Border.all(
-                  color: task.isCompleted ? AppColors.primary : const Color(0xFFC7BCAD),
+                  color: task.isCompleted
+                      ? AppColors.primary
+                      : (isDark ? Colors.white38 : const Color(0xFFC7BCAD)),
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -267,7 +269,9 @@ class _ScheduleTaskCard extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                    color: task.isCompleted
+                        ? (isDark ? Colors.white38 : AppColors.textSecondary)
+                        : (isDark ? Colors.white : AppColors.textPrimary),
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                   ),
                 ),

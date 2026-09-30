@@ -935,14 +935,26 @@ class _JourneyScreenState extends State<JourneyScreen>
               ),
               const SizedBox(height: 14),
 
-              // Title
-              Text(
-                node.title,
-                style: GoogleFonts.lora(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF2D2620),
-                ),
+              // Title with Thematic Icon
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    node.displayIcon,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      node.title,
+                      style: GoogleFonts.lora(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF2D2620),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -1916,65 +1928,108 @@ class _DuolingoNodeItem extends StatelessWidget {
     final isActive = node.status == NodeStatus.active;
     final isLocked = node.status == NodeStatus.locked;
 
-    // Distinct colors per status (Duolingo 3D button feel with thick bottom border)
+    // Distinct colors per status (Duolingo 3D button feel with rich dark palette)
     Color surfaceColor;
     Color bottomBorderColor;
-    IconData iconData;
 
     if (isCompleted) {
-      surfaceColor = const Color(0xFF047857); // Sage Green
-      bottomBorderColor = const Color(0xFF064E3B);
-      iconData = Icons.check_rounded;
+      surfaceColor = isDark ? const Color(0xFF065F46) : const Color(0xFF047857);
+      bottomBorderColor = isDark ? const Color(0xFF022C22) : const Color(0xFF064E3B);
     } else if (isActive) {
-      surfaceColor = const Color(0xFFC2410C); // Terracotta
-      bottomBorderColor = const Color(0xFF9A3412);
-      iconData = Icons.play_arrow_rounded;
+      surfaceColor = isDark ? AppColors.darkSecondary : const Color(0xFFC2410C);
+      bottomBorderColor = isDark ? const Color(0xFF5B21B6) : const Color(0xFF9A3412);
     } else {
-      surfaceColor = isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
-      bottomBorderColor =
-          isDark ? const Color(0xFF1E293B) : const Color(0xFF94A3B8);
-      iconData = Icons.lock_rounded;
+      surfaceColor = isDark ? const Color(0x801E293B) : const Color(0xFFCBD5E1);
+      bottomBorderColor = isDark ? const Color(0xFF0F172A) : const Color(0xFF94A3B8);
     }
 
-    if (node.type == NodeType.chest) {
-      iconData = Icons.card_giftcard_rounded;
-    } else if (node.type == NodeType.quiz) {
-      iconData = isCompleted ? Icons.check_rounded : Icons.bolt_rounded;
-    }
-
-    return Container(
-      width: 66,
-      height: 66,
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        shape: BoxShape.circle,
-        border: Border(
-          bottom: BorderSide(color: bottomBorderColor, width: 5),
-          top: BorderSide(
-              color: Colors.white.withAlpha(isCompleted || isActive ? 70 : 30),
-              width: 2),
-          left: BorderSide(
-              color: Colors.white.withAlpha(isCompleted || isActive ? 50 : 20),
-              width: 1),
-          right: BorderSide(
-              color: Colors.black.withAlpha(isCompleted || isActive ? 30 : 20),
-              width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: surfaceColor.withAlpha(isActive ? 110 : 40),
-            blurRadius: isActive ? 14 : 6,
-            offset: const Offset(0, 4),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            shape: BoxShape.circle,
+            border: Border(
+              bottom: BorderSide(color: bottomBorderColor, width: 5),
+              top: BorderSide(
+                color: Colors.white.withAlpha(isCompleted || isActive ? (isDark ? 90 : 70) : 30),
+                width: 2,
+              ),
+              left: BorderSide(
+                color: Colors.white.withAlpha(isCompleted || isActive ? 50 : 20),
+                width: 1,
+              ),
+              right: BorderSide(
+                color: Colors.black.withAlpha(isCompleted || isActive ? 40 : 20),
+                width: 1,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? (isActive
+                        ? AppColors.darkPrimary.withAlpha(120)
+                        : (isCompleted
+                            ? const Color(0xFF10B981).withAlpha(80)
+                            : Colors.black.withAlpha(50)))
+                    : surfaceColor.withAlpha(isActive ? 110 : 40),
+                blurRadius: isActive ? 16 : 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          iconData,
-          size: 30,
-          color: isLocked ? const Color(0xFF64748B) : Colors.white,
+          child: Center(
+            child: Opacity(
+              opacity: isLocked ? 0.6 : 1.0,
+              child: Text(
+                node.displayIcon,
+                style: const TextStyle(fontSize: 28),
+              ),
+            ),
+          ),
         ),
-      ),
+
+        // Small corner badge indicating status
+        Positioned(
+          right: -2,
+          bottom: 2,
+          child: Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isCompleted
+                  ? const Color(0xFF10B981)
+                  : (isActive
+                      ? (isDark ? AppColors.darkPrimary : const Color(0xFFEA580C))
+                      : (isDark ? const Color(0xFF475569) : const Color(0xFF64748B))),
+              border: Border.all(
+                color: isDark ? const Color(0xFF030712) : Colors.white,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(50),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                isCompleted
+                    ? Icons.check_rounded
+                    : (isActive ? Icons.play_arrow_rounded : Icons.lock_rounded),
+                size: 13,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

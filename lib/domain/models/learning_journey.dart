@@ -15,6 +15,7 @@ class JourneyNode {
   final int stars; // 0 to 3
   final int stage;
   final double horizontalOffset; // -0.6 to 0.6 for zigzag path
+  final String? icon;
 
   const JourneyNode({
     required this.id,
@@ -27,6 +28,7 @@ class JourneyNode {
     this.stars = 0,
     required this.stage,
     required this.horizontalOffset,
+    this.icon,
   });
 
   JourneyNode copyWith({
@@ -39,6 +41,7 @@ class JourneyNode {
     int? stars,
     int? stage,
     double? horizontalOffset,
+    String? icon,
   }) {
     return JourneyNode(
       id: id,
@@ -51,7 +54,62 @@ class JourneyNode {
       stars: stars ?? this.stars,
       stage: stage ?? this.stage,
       horizontalOffset: horizontalOffset ?? this.horizontalOffset,
+      icon: icon ?? this.icon,
     );
+  }
+
+  /// Distinct thematic icon for every level
+  String get displayIcon {
+    if (icon != null && icon!.isNotEmpty) return icon!;
+
+    if (type == NodeType.chest) return '🎁';
+    if (type == NodeType.hurdle) return '🏰';
+    if (type == NodeType.quiz) return '⚡';
+
+    final text = '$title $subjectName'.toLowerCase();
+    // Physics
+    if (text.contains('quantum') || text.contains('atom')) return '⚛️';
+    if (text.contains('wave') || text.contains('optic')) return '🔬';
+    if (text.contains('thermo') || text.contains('heat') || text.contains('energy')) return '🔥';
+    if (text.contains('magnet') || text.contains('electric') || text.contains('circuit')) return '⚡';
+    if (text.contains('mechanic') || text.contains('motion') || text.contains('force')) return '🚀';
+    if (text.contains('physic')) return '🔭';
+
+    // Mathematics
+    if (text.contains('calculus') || text.contains('integral') || text.contains('deriv')) return '♾️';
+    if (text.contains('algebra') || text.contains('matrix') || text.contains('linear')) return '🔢';
+    if (text.contains('geometr') || text.contains('trig')) return '📐';
+    if (text.contains('statist') || text.contains('probab')) return '📊';
+    if (text.contains('math')) return '🧮';
+
+    // Chemistry
+    if (text.contains('organic') || text.contains('carbon')) return '⚗️';
+    if (text.contains('reaction') || text.contains('bond') || text.contains('molecul')) return '🧪';
+    if (text.contains('solution') || text.contains('acid') || text.contains('base')) return '💧';
+    if (text.contains('chem')) return '🧪';
+
+    // Computer Science
+    if (text.contains('algorithm') || text.contains('logic')) return '🧠';
+    if (text.contains('data') || text.contains('struct')) return '🗄️';
+    if (text.contains('ai') || text.contains('robot') || text.contains('learn')) return '🤖';
+    if (text.contains('network') || text.contains('web') || text.contains('cloud')) return '🌐';
+    if (text.contains('code') || text.contains('program') || text.contains('comput')) return '💻';
+
+    // Biology
+    if (text.contains('genet') || text.contains('dna') || text.contains('rna')) return '🧬';
+    if (text.contains('plant') || text.contains('botan') || text.contains('photo')) return '🌿';
+    if (text.contains('cell') || text.contains('microb') || text.contains('virus')) return '🦠';
+    if (text.contains('bio')) return '🦉';
+
+    // Humanities & Languages
+    if (text.contains('history') || text.contains('civic')) return '📜';
+    if (text.contains('geograph') || text.contains('earth')) return '🌍';
+    if (text.contains('litera') || text.contains('read') || text.contains('grammar') || text.contains('eng')) return '📖';
+    if (text.contains('law') || text.contains('justic')) return '⚖️';
+    if (text.contains('business') || text.contains('econ') || text.contains('financ')) return '📈';
+
+    if (type == NodeType.practice) return '✍️';
+    return '📘';
   }
 
   Map<String, dynamic> toJson() => {
@@ -65,6 +123,7 @@ class JourneyNode {
         'stars': stars,
         'stage': stage,
         'horizontalOffset': horizontalOffset,
+        'icon': icon,
       };
 
   factory JourneyNode.fromJson(Map<String, dynamic> json) => JourneyNode(
@@ -84,6 +143,7 @@ class JourneyNode {
         stars: json['stars'] as int? ?? 0,
         stage: json['stage'] as int? ?? 1,
         horizontalOffset: (json['horizontalOffset'] as num?)?.toDouble() ?? 0.0,
+        icon: json['icon'] as String?,
       );
 }
 
@@ -185,6 +245,7 @@ class JourneyProgress {
   final bool hasStreakShield;
   final List<JourneyNode> nodes;
   final List<ExamHurdle> hurdles;
+  final double totalHours;
 
   JourneyProgress({
     required this.totalXp,
@@ -194,6 +255,7 @@ class JourneyProgress {
     required this.nodes,
     List<ExamHurdle>? hurdles,
     ExamHurdle? hurdle,
+    this.totalHours = 0.0,
   }) : hurdles = hurdles ?? (hurdle != null ? [hurdle] : const []);
 
   ExamHurdle get hurdle =>
@@ -223,7 +285,13 @@ class JourneyProgress {
         completedNodes: 0,
       );
 
-  int get level => (totalXp ~/ 120) + 1;
+  int get succeededLevelsCount =>
+      nodes.where((n) => n.status == NodeStatus.completed).length;
+
+  /// Dynamic Level: derived from succeeded levels + focus study hours + XP earned
+  int get level =>
+      ((totalXp ~/ 80) + succeededLevelsCount + (totalHours.toInt() ~/ 2))
+          .clamp(1, 99);
 
   String get levelTitle {
     if (level <= 1) return 'Novice Scholar';
@@ -232,6 +300,43 @@ class JourneyProgress {
     if (level <= 4) return 'Syllabus Crusher';
     if (level <= 5) return 'Exam Grandmaster';
     return 'Scholar of Eminence';
+  }
+
+  /// Calculates real consecutive active days based on actual session dates
+  static int calculateStreakFromSessions({
+    required List<DateTime> studyDates,
+    DateTime? lastStudyDate,
+  }) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    final normalizedDates = studyDates
+        .map((d) => DateTime(d.year, d.month, d.day))
+        .toSet();
+
+    if (lastStudyDate != null) {
+      normalizedDates.add(DateTime(lastStudyDate.year, lastStudyDate.month, lastStudyDate.day));
+    }
+
+    if (normalizedDates.isEmpty) return 0;
+
+    DateTime checkDate;
+    if (normalizedDates.contains(today)) {
+      checkDate = today;
+    } else if (normalizedDates.contains(yesterday)) {
+      checkDate = yesterday;
+    } else {
+      return 0;
+    }
+
+    int streak = 0;
+    while (normalizedDates.contains(checkDate)) {
+      streak++;
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    return streak;
   }
 
   int get xpForNextLevel => (level * 120) - totalXp;
@@ -245,6 +350,7 @@ class JourneyProgress {
     List<JourneyNode>? nodes,
     List<ExamHurdle>? hurdles,
     ExamHurdle? hurdle,
+    double? totalHours,
   }) {
     return JourneyProgress(
       totalXp: totalXp ?? this.totalXp,
@@ -253,6 +359,7 @@ class JourneyProgress {
       hasStreakShield: hasStreakShield ?? this.hasStreakShield,
       nodes: nodes ?? this.nodes,
       hurdles: hurdles ?? (hurdle != null ? [hurdle] : this.hurdles),
+      totalHours: totalHours ?? this.totalHours,
     );
   }
 
@@ -264,6 +371,7 @@ class JourneyProgress {
         'nodes': nodes.map((n) => n.toJson()).toList(),
         'hurdles': hurdles.map((h) => h.toJson()).toList(),
         'hurdle': hurdle.toJson(),
+        'totalHours': totalHours,
       };
 
   factory JourneyProgress.fromJson(Map<String, dynamic> json) {
@@ -290,6 +398,7 @@ class JourneyProgress {
           .map((e) => JourneyNode.fromJson(e as Map<String, dynamic>))
           .toList(),
       hurdles: hurdlesList,
+      totalHours: (json['totalHours'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
